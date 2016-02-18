@@ -1,0 +1,117 @@
+html {
+    height: 100%;
+    width: 100%;
+}
+
+body {
+    margin: 5%;
+    font-family: 'Roboto Mono','monospace';
+    font-size: 7rem;
+    background-color: #23313f;
+    color: #60B5CC;
+}
+
+.scene {
+  position:absolute;
+  -ms-transform: translateX(-50%) translateY(-50%);
+  -webkit-transform: translate(-50%,-50%);
+  top:50%;
+  left:50%;
+  transform: translate(-50%,-50%);
+  padding: 0;
+  vertical-align: middle;
+  width: 70%;
+}
+
+.clock {
+  position: fixed;
+  top: 0;
+  left: 0;
+  z-index: 100;
+}
+
+.overlay {
+  position:absolute;
+  top:50%;
+  left:50%;
+  padding: 0;
+  -ms-transform: translateX(-50%) translateY(-50%);
+  -webkit-transform: translate(-50%,-50%);
+  transform: translate(-50%,-50%);
+  text-align: center;
+  vertical-align: middle;
+  z-index: 110;
+  font-size: 30rem;
+  color: gray;
+  opacity: 0.2;
+}
+
+.footer {
+  position:absolute;
+  bottom: 1rem;
+  right: 1rem;
+  font-size: 1rem;
+  color: gray;
+  opacity: 0.5;
+}
+
+.scene0 {
+  font-weight: bold;
+}
+
+.scene1 {
+  font-size: 5.5rem;
+}
+
+.scene2 {
+  font-size: 5.5rem;
+}
+
+.scene3 {
+  font-size: 5.5rem;
+}
+
+.scene4 {
+  font-size: 5.5rem;
+}
+
+.tiny {
+  font-size: 1.5rem;
+  padding: 1em 0 0 0;
+}
+
+.small {
+  font-size: 2.5rem;
+  padding: 1em 0 0 0;
+}
+
+.midi {
+  font-size: 3.25rem;
+  padding: 1em 0 0 0;
+}
+
+.medium {
+  font-size: 4rem;
+  padding: 0.5em 0 0 0;
+}
+
+.orange {
+  color: #F0AD00;
+}
+
+.green {
+  color: #7FD13B;
+}
+
+.pink {
+  color: #ef005b;
+}
+
+.blue {
+  color: #60B5CC;
+}
+
+.offset {
+  position: relative;
+  left: 3em;
+}

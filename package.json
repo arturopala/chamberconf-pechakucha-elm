@@ -1,0 +1,16 @@
+{
+  "name": "chamberconf-pechakucha",
+  "version": "1.0.0",
+  "description": "Chamberconf 2016 Pecha Kucha [http://chamberconf.pl]",
+  "scripts": {
+    "compile": "echo 'Compiling Pecha Kucha ...' && elm-make **/*.elm --output assets/pechakucha.js && onchange '**/*.elm' -v -- elm-make **/*.elm --output assets/pechakucha.js",
+    "test": "echo 'Testing Pecha Kucha ...' && onchange '**/*.elm' -v -- elm-test test/TestRunner.elm",
+    "start": "ws"
+  },
+  "devDependencies": {
+    "elm": "^0.16.0",
+    "elm-test": "^0.16.0",
+    "onchange": "^2.0.0",
+    "ws": "^1.0.1"
+  }
+}
