@@ -10659,7 +10659,6 @@ Elm.PechaKucha.Actions.make = function (_elm) {
    if (_elm.PechaKucha.Actions.values) return _elm.PechaKucha.Actions.values;
    var _U = Elm.Native.Utils.make(_elm),
    $Basics = Elm.Basics.make(_elm),
-   $Char = Elm.Char.make(_elm),
    $Debug = Elm.Debug.make(_elm),
    $List = Elm.List.make(_elm),
    $Maybe = Elm.Maybe.make(_elm),
@@ -10667,10 +10666,8 @@ Elm.PechaKucha.Actions.make = function (_elm) {
    $Signal = Elm.Signal.make(_elm);
    var _op = {};
    var UrlHash = function (a) {    return {ctor: "UrlHash",_0: a};};
-   var hashAsAction = function (h) {    return UrlHash(h);};
    var Scene = function (a) {    return {ctor: "Scene",_0: a};};
    var KeyPressed = function (a) {    return {ctor: "KeyPressed",_0: a};};
-   var keypressAsAction = function (code) {    return KeyPressed(code);};
    var Pause = {ctor: "Pause"};
    var Run = {ctor: "Run"};
    var Tick = {ctor: "Tick"};
@@ -10688,9 +10685,7 @@ Elm.PechaKucha.Actions.make = function (_elm) {
                                            ,KeyPressed: KeyPressed
                                            ,Scene: Scene
                                            ,UrlHash: UrlHash
-                                           ,arrowAsAction: arrowAsAction
-                                           ,keypressAsAction: keypressAsAction
-                                           ,hashAsAction: hashAsAction};
+                                           ,arrowAsAction: arrowAsAction};
 };
 Elm.Native = Elm.Native || {};
 Elm.Native.History = {};
@@ -11363,7 +11358,7 @@ Elm.PechaKucha.Page03.make = function (_elm) {
    _U.list([$Html.text("transform, not mutate")]));
    var scene1 = A2($Html.div,
    _U.list([$Html$Attributes.$class("scene1 orange animated fadeIn"),$Html$Attributes.key("s0.1")]),
-   _U.list([$Html.text("same input -> same output")]));
+   _U.list([$Html.text("same input -> output")]));
    var scene0 = A2($Html.div,_U.list([$Html$Attributes.$class("scene0"),$Html$Attributes.key("s0.0")]),_U.list([$Html.text("Elm is functional")]));
    var view = F2(function (address,model) {
       var _p0 = model.scene;
@@ -12624,7 +12619,7 @@ Elm.PechaKucha.make = function (_elm) {
    });
    var none = $Effects.none;
    var setHash = function (n) {
-      var set = $History.setPath(A2($Basics._op["++"],"/#",$Basics.toString(n)));
+      var set = $History.setPath(A2($Basics._op["++"],"#",$Basics.toString(n)));
       var task = A2($Task.andThen,set,function (_p10) {    return $Task.succeed($PechaKucha$Actions.Noop);});
       return $Effects.task(task);
    };
@@ -12655,11 +12650,12 @@ Elm.PechaKucha.make = function (_elm) {
    });
    var decrementDelay = A2($Monocle$Lens.modify,$PechaKucha$Model.delayedLens,function (t) {    return _U.cmp(t,0) > 0 ? t - 1 : t;});
    var tickClock = A2($Monocle$Lens.modify,$PechaKucha$Model.clockLens,function (t) {    return t + 1;});
-   var receiveUrlHash = F2(function (hash,model) {
-      var index = $Result.toMaybe($String.toInt(A2($String.dropLeft,1,hash)));
-      var _p16 = index;
-      if (_p16.ctor === "Just") {
-            return {ctor: "_Tuple2",_0: A2($PechaKucha$Model.clockLens.set,0,A2($PechaKucha$Model.indexLens.set,_p16._0,model)),_1: none};
+   var receiveUrlPath = F2(function (path,model) {
+      var index = $Result.toMaybe($String.toInt(A2($String.dropLeft,1,path)));
+      var _p16 = A2($Debug.log,"path",path);
+      var _p17 = index;
+      if (_p17.ctor === "Just") {
+            return {ctor: "_Tuple2",_0: A2($PechaKucha$Model.clockLens.set,0,A2($PechaKucha$Model.indexLens.set,_p17._0,model)),_1: none};
          } else {
             return {ctor: "_Tuple2",_0: model,_1: none};
          }
@@ -12684,35 +12680,35 @@ Elm.PechaKucha.make = function (_elm) {
       return {ctor: "_Tuple2",_0: updated,_1: effects};
    };
    var receiveTickOtherwise = function (model) {    return {ctor: "_Tuple2",_0: decrementDelay(model),_1: none};};
-   var receiveTickWhenRunning = function (_p17) {
+   var receiveTickWhenRunning = function (_p18) {
       return function (m) {
          return _U.cmp(m.clock,$PechaKucha$Config.pageFrames) > -1 ? receiveNextPage(m) : _U.eq(A2($Basics.rem,m.clock,$PechaKucha$Config.roundFrames),
          0) ? {ctor: "_Tuple2",_0: m,_1: send($PechaKucha$Actions.Scene(m.clock / $PechaKucha$Config.roundFrames | 0))} : {ctor: "_Tuple2",_0: m,_1: none};
-      }(tickClock(_p17));
+      }(tickClock(_p18));
    };
    var updateModel = F2(function (action,model) {
-      var _p18 = action;
+      var _p19 = action;
       _v6_4: do {
-         switch (_p18.ctor)
+         switch (_p19.ctor)
          {case "Run": return receiveRun(model);
-            case "KeyPressed": switch (_p18._0)
+            case "KeyPressed": switch (_p19._0)
               {case 32: return receiveRun(model);
                  case 13: return receiveRun(model);
                  default: break _v6_4;}
-            case "UrlHash": return A2(receiveUrlHash,_p18._0,model);
+            case "UrlHash": return A2(receiveUrlPath,_p19._0,model);
             default: break _v6_4;}
       } while (false);
       return {ctor: "_Tuple2",_0: model,_1: none};
    });
    var updateWhenRunning = F2(function (action,model) {
-      var _p19 = action;
+      var _p20 = action;
       _v7_5: do {
-         switch (_p19.ctor)
+         switch (_p20.ctor)
          {case "Tick": return receiveTickWhenRunning(model);
             case "NextPage": return A2(_op[">>>"],receivePause,receiveNextPage)(model);
             case "PreviousPage": return A2(_op[">>>"],receivePause,receivePreviousPage)(model);
             case "Pause": return receivePause(model);
-            case "KeyPressed": if (_p19._0 === 32) {
+            case "KeyPressed": if (_p20._0 === 32) {
                     return receivePause(model);
                  } else {
                     break _v7_5;
@@ -12722,16 +12718,16 @@ Elm.PechaKucha.make = function (_elm) {
       return A2(updateModel,action,model);
    });
    var updateWhenPaused = F2(function (action,model) {
-      var _p20 = action;
-      switch (_p20.ctor)
+      var _p21 = action;
+      switch (_p21.ctor)
       {case "Tick": return receiveTickOtherwise(model);
          case "NextPage": return receiveNextPage(model);
          case "PreviousPage": return receivePreviousPage(model);
          default: return A2(updateModel,action,model);}
    });
    var updateWhenIdle = F2(function (action,model) {
-      var _p21 = action;
-      if (_p21.ctor === "NextPage") {
+      var _p22 = action;
+      if (_p22.ctor === "NextPage") {
             return A2(_op[">>>"],receivePause,receiveNextPage)(model);
          } else {
             return A2(updateModel,action,model);
@@ -12739,20 +12735,20 @@ Elm.PechaKucha.make = function (_elm) {
    });
    var updatePages = function (action) {    return A3($Monocle$Lens.modifyAndMerge,$PechaKucha$Model.pagesLens,$PechaKucha$Pages.update(action),mergeEffects);};
    var init = function () {
-      var _p22 = $PechaKucha$Pages.init;
-      var pages = _p22._0;
-      var effects = _p22._1;
+      var _p23 = $PechaKucha$Pages.init;
+      var pages = _p23._0;
+      var effects = _p23._1;
       return {ctor: "_Tuple2"
              ,_0: {clock: 0,pages: pages,state: $PechaKucha$Model.Idle,delayed: $PechaKucha$Config.initialDelay}
-             ,_1: $Effects.batch(_U.list([effects]))};
+             ,_1: $Effects.batch(_U.list([setHash(0)]))};
    }();
    var updateWhenTerminated = F2(function (action,model) {
-      var _p23 = action;
+      var _p24 = action;
       _v10_4: do {
-         switch (_p23.ctor)
+         switch (_p24.ctor)
          {case "Tick": return receiveTickOtherwise(model);
             case "Run": return A2(_op["|>>"],init,receiveRun);
-            case "KeyPressed": if (_p23._0 === 13) {
+            case "KeyPressed": if (_p24._0 === 13) {
                     return A2(_op["|>>"],init,receiveRun);
                  } else {
                     break _v10_4;
@@ -12763,8 +12759,8 @@ Elm.PechaKucha.make = function (_elm) {
       return A2(updateModel,action,model);
    });
    var update = F2(function (action,model) {
-      var _p24 = model.state;
-      switch (_p24.ctor)
+      var _p25 = model.state;
+      switch (_p25.ctor)
       {case "Idle": return A2(updateWhenIdle,action,model);
          case "Paused": return A2(updateWhenPaused,action,model);
          case "Running": return A2(updatePages,action,A2(updateWhenRunning,action,model));
@@ -12785,7 +12781,7 @@ Elm.PechaKucha.make = function (_elm) {
                                    ,receivePreviousPage: receivePreviousPage
                                    ,receiveRun: receiveRun
                                    ,receivePause: receivePause
-                                   ,receiveUrlHash: receiveUrlHash
+                                   ,receiveUrlPath: receiveUrlPath
                                    ,tickClock: tickClock
                                    ,decrementDelay: decrementDelay
                                    ,resetClock: resetClock
@@ -12825,9 +12821,9 @@ Elm.Main.make = function (_elm) {
                              ,update: $PechaKucha.update
                              ,view: $PechaKucha.view
                              ,inputs: _U.list([A2($Signal.map,function (_p0) {    return $PechaKucha$Actions.Tick;},$Time.fps($PechaKucha$Config.fps))
-                                              ,A2($Signal.map,$PechaKucha$Actions.keypressAsAction,$Keyboard.presses)
+                                              ,A2($Signal.map,$PechaKucha$Actions.KeyPressed,$Keyboard.presses)
                                               ,A2($Signal.map,$PechaKucha$Actions.arrowAsAction,$Keyboard.arrows)
-                                              ,A2($Signal.map,$PechaKucha$Actions.hashAsAction,$History.hash)])});
+                                              ,A2($Signal.map,$PechaKucha$Actions.UrlHash,$History.hash)])});
    var main = app.html;
    var tasks = Elm.Native.Task.make(_elm).performSignal("tasks",app.tasks);
    return _elm.Main.values = {_op: _op,app: app,main: main};

@@ -21,11 +21,11 @@ app =
             [ -- Every second signal a clock tick
               Signal.map (\_ -> Tick) (Time.fps PechaKucha.Config.fps)
             , -- Catch key presses
-              Signal.map PechaKucha.Actions.keypressAsAction Keyboard.presses
+              Signal.map KeyPressed Keyboard.presses
             , -- Catch arrow press
               Signal.map PechaKucha.Actions.arrowAsAction Keyboard.arrows
               -- Catch url hash history
-            , Signal.map PechaKucha.Actions.hashAsAction History.hash
+            , Signal.map UrlHash History.hash
             ]
         }
 

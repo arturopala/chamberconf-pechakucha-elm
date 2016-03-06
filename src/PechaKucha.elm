@@ -34,7 +34,7 @@ init =
           , state = Idle
           , delayed = initialDelay
           }
-        , Effects.batch [ effects ]
+        , Effects.batch [ setHash 0 ]
         )
 
 
@@ -142,8 +142,8 @@ updateModel action model =
         KeyPressed 13 ->
             receiveRun model
 
-        UrlHash hash ->
-            receiveUrlHash hash model
+        UrlHash path ->
+            receiveUrlPath path model
 
         _ ->
             ( model, none )
@@ -198,10 +198,12 @@ receivePause model =
     ( stateLens.set Paused model |> delayedLens.set initialDelay, none )
 
 
-receiveUrlHash hash model =
+receiveUrlPath path model =
     let
+        _ = Debug.log "path" path
+
         index =
-            hash
+            path
                 |> String.dropLeft 1
                 |> String.toInt
                 |> Result.toMaybe
@@ -273,7 +275,7 @@ send action =
 
 setHash n =
     let
-        set = History.setPath ("/#" ++ (toString n))
+        set = History.setPath ("#" ++ (toString n))
 
         task = Task.andThen set (\_ -> Task.succeed Noop)
     in

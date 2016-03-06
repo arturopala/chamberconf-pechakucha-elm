@@ -23,12 +23,3 @@ arrowAsAction { x, y } =
         PreviousPage
     else
         Noop
-
-
-keypressAsAction : KeyCode -> Action
-keypressAsAction code =
-    KeyPressed code
-
-
-hashAsAction h =
-    UrlHash h
