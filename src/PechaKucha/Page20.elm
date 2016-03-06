@@ -3,7 +3,7 @@ module PechaKucha.Page20 (Model, init, update, view) where
 import Html exposing (..)
 import Html.Attributes exposing (class, classList, style, key)
 import PechaKucha.PageType1
-import Actions exposing (..)
+import PechaKucha.Actions exposing (..)
 
 
 -- SCENES
@@ -20,14 +20,14 @@ scene1 : Html
 scene1 =
     div
         [ class "scene1 orange animated fadeIn", key "s0.1" ]
-        [ text "elm-to-js transpiler" ]
+        [ text "clean and safe lang" ]
 
 
 scene2 : Html
 scene2 =
     div
         [ class "scene2 green  animated fadeIn", key "s0.2" ]
-        [ text "good core library" ]
+        [ text "clever architecture" ]
 
 
 scene3 : Html
@@ -41,7 +41,7 @@ scene4 : Html
 scene4 =
     div
         [ class "scene4 blue animated fadeIn", key "s0.4" ]
-        [ text "neat package manager" ]
+        [ text "neat tools and libs" ]
 
 
 

@@ -1,4 +1,4 @@
-module Actions (..) where
+module PechaKucha.Actions (..) where
 
 import Char exposing (KeyCode)
 

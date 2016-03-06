@@ -5388,7 +5388,7 @@ Elm.Signal.make = function (_elm) {
    var mergeMany = function (signalList) {
       var _p7 = $List.reverse(signalList);
       if (_p7.ctor === "[]") {
-            return _U.crashCase("Signal",{start: {line: 184,column: 3},end: {line: 189,column: 40}},_p7)("mergeMany was given an empty list!");
+            return _U.crashCase("Signal",{start: {line: 175,column: 5},end: {line: 180,column: 44}},_p7)("mergeMany was given an empty list!");
          } else {
             return A3($List.foldl,merge,_p7._0,_p7._1);
          }
@@ -8358,46 +8358,6 @@ Elm.Set.make = function (_elm) {
                             ,toList: toList
                             ,fromList: fromList};
 };
-Elm.Actions = Elm.Actions || {};
-Elm.Actions.make = function (_elm) {
-   "use strict";
-   _elm.Actions = _elm.Actions || {};
-   if (_elm.Actions.values) return _elm.Actions.values;
-   var _U = Elm.Native.Utils.make(_elm),
-   $Basics = Elm.Basics.make(_elm),
-   $Char = Elm.Char.make(_elm),
-   $Debug = Elm.Debug.make(_elm),
-   $List = Elm.List.make(_elm),
-   $Maybe = Elm.Maybe.make(_elm),
-   $Result = Elm.Result.make(_elm),
-   $Signal = Elm.Signal.make(_elm);
-   var _op = {};
-   var UrlHash = function (a) {    return {ctor: "UrlHash",_0: a};};
-   var hashAsAction = function (h) {    return UrlHash(h);};
-   var Scene = function (a) {    return {ctor: "Scene",_0: a};};
-   var KeyPressed = function (a) {    return {ctor: "KeyPressed",_0: a};};
-   var keypressAsAction = function (code) {    return KeyPressed(code);};
-   var Pause = {ctor: "Pause"};
-   var Run = {ctor: "Run"};
-   var Tick = {ctor: "Tick"};
-   var NextPage = {ctor: "NextPage"};
-   var PreviousPage = {ctor: "PreviousPage"};
-   var Noop = {ctor: "Noop"};
-   var arrowAsAction = function (_p0) {    var _p1 = _p0;var _p2 = _p1.x;return _U.eq(_p2,1) ? NextPage : _U.eq(_p2,-1) ? PreviousPage : Noop;};
-   return _elm.Actions.values = {_op: _op
-                                ,Noop: Noop
-                                ,PreviousPage: PreviousPage
-                                ,NextPage: NextPage
-                                ,Tick: Tick
-                                ,Run: Run
-                                ,Pause: Pause
-                                ,KeyPressed: KeyPressed
-                                ,Scene: Scene
-                                ,UrlHash: UrlHash
-                                ,arrowAsAction: arrowAsAction
-                                ,keypressAsAction: keypressAsAction
-                                ,hashAsAction: hashAsAction};
-};
 (function e(t,n,r){function s(o,u){if(!n[o]){if(!t[o]){var a=typeof require=="function"&&require;if(!u&&a)return a(o,!0);if(i)return i(o,!0);var f=new Error("Cannot find module '"+o+"'");throw f.code="MODULE_NOT_FOUND",f}var l=n[o]={exports:{}};t[o][0].call(l.exports,function(e){var n=t[o][1][e];return s(n?n:e)},l,l.exports,e,t,n,r)}return n[o].exports}var i=typeof require=="function"&&require;for(var o=0;o<r.length;o++)s(r[o]);return s})({1:[function(require,module,exports){
 
 },{}],2:[function(require,module,exports){
@@ -10500,6 +10460,373 @@ Elm.StartApp.make = function (_elm) {
    var Config = F4(function (a,b,c,d) {    return {init: a,update: b,view: c,inputs: d};});
    return _elm.StartApp.values = {_op: _op,start: start,Config: Config,App: App};
 };
+Elm.Native.Keyboard = {};
+
+Elm.Native.Keyboard.make = function(localRuntime) {
+	localRuntime.Native = localRuntime.Native || {};
+	localRuntime.Native.Keyboard = localRuntime.Native.Keyboard || {};
+	if (localRuntime.Native.Keyboard.values)
+	{
+		return localRuntime.Native.Keyboard.values;
+	}
+
+	var NS = Elm.Native.Signal.make(localRuntime);
+
+
+	function keyEvent(event)
+	{
+		return {
+			alt: event.altKey,
+			meta: event.metaKey,
+			keyCode: event.keyCode
+		};
+	}
+
+
+	function keyStream(node, eventName, handler)
+	{
+		var stream = NS.input(eventName, { alt: false, meta: false, keyCode: 0 });
+
+		localRuntime.addListener([stream.id], node, eventName, function(e) {
+			localRuntime.notify(stream.id, handler(e));
+		});
+
+		return stream;
+	}
+
+	var downs = keyStream(document, 'keydown', keyEvent);
+	var ups = keyStream(document, 'keyup', keyEvent);
+	var presses = keyStream(document, 'keypress', keyEvent);
+	var blurs = keyStream(window, 'blur', function() { return null; });
+
+
+	return localRuntime.Native.Keyboard.values = {
+		downs: downs,
+		ups: ups,
+		blurs: blurs,
+		presses: presses
+	};
+};
+
+Elm.Keyboard = Elm.Keyboard || {};
+Elm.Keyboard.make = function (_elm) {
+   "use strict";
+   _elm.Keyboard = _elm.Keyboard || {};
+   if (_elm.Keyboard.values) return _elm.Keyboard.values;
+   var _U = Elm.Native.Utils.make(_elm),
+   $Basics = Elm.Basics.make(_elm),
+   $Char = Elm.Char.make(_elm),
+   $Native$Keyboard = Elm.Native.Keyboard.make(_elm),
+   $Set = Elm.Set.make(_elm),
+   $Signal = Elm.Signal.make(_elm);
+   var _op = {};
+   var presses = A2($Signal.map,function (_) {    return _.keyCode;},$Native$Keyboard.presses);
+   var toXY = F2(function (_p0,keyCodes) {
+      var _p1 = _p0;
+      var is = function (keyCode) {    return A2($Set.member,keyCode,keyCodes) ? 1 : 0;};
+      return {x: is(_p1.right) - is(_p1.left),y: is(_p1.up) - is(_p1.down)};
+   });
+   var Directions = F4(function (a,b,c,d) {    return {up: a,down: b,left: c,right: d};});
+   var dropMap = F2(function (f,signal) {    return $Signal.dropRepeats(A2($Signal.map,f,signal));});
+   var EventInfo = F3(function (a,b,c) {    return {alt: a,meta: b,keyCode: c};});
+   var Blur = {ctor: "Blur"};
+   var Down = function (a) {    return {ctor: "Down",_0: a};};
+   var Up = function (a) {    return {ctor: "Up",_0: a};};
+   var rawEvents = $Signal.mergeMany(_U.list([A2($Signal.map,Up,$Native$Keyboard.ups)
+                                             ,A2($Signal.map,Down,$Native$Keyboard.downs)
+                                             ,A2($Signal.map,$Basics.always(Blur),$Native$Keyboard.blurs)]));
+   var empty = {alt: false,meta: false,keyCodes: $Set.empty};
+   var update = F2(function (event,model) {
+      var _p2 = event;
+      switch (_p2.ctor)
+      {case "Down": var _p3 = _p2._0;
+           return {alt: _p3.alt,meta: _p3.meta,keyCodes: A2($Set.insert,_p3.keyCode,model.keyCodes)};
+         case "Up": var _p4 = _p2._0;
+           return {alt: _p4.alt,meta: _p4.meta,keyCodes: A2($Set.remove,_p4.keyCode,model.keyCodes)};
+         default: return empty;}
+   });
+   var model = A3($Signal.foldp,update,empty,rawEvents);
+   var alt = A2(dropMap,function (_) {    return _.alt;},model);
+   var meta = A2(dropMap,function (_) {    return _.meta;},model);
+   var keysDown = A2(dropMap,function (_) {    return _.keyCodes;},model);
+   var arrows = A2(dropMap,toXY({up: 38,down: 40,left: 37,right: 39}),keysDown);
+   var wasd = A2(dropMap,toXY({up: 87,down: 83,left: 65,right: 68}),keysDown);
+   var isDown = function (keyCode) {    return A2(dropMap,$Set.member(keyCode),keysDown);};
+   var ctrl = isDown(17);
+   var shift = isDown(16);
+   var space = isDown(32);
+   var enter = isDown(13);
+   var Model = F3(function (a,b,c) {    return {alt: a,meta: b,keyCodes: c};});
+   return _elm.Keyboard.values = {_op: _op
+                                 ,arrows: arrows
+                                 ,wasd: wasd
+                                 ,enter: enter
+                                 ,space: space
+                                 ,ctrl: ctrl
+                                 ,shift: shift
+                                 ,alt: alt
+                                 ,meta: meta
+                                 ,isDown: isDown
+                                 ,keysDown: keysDown
+                                 ,presses: presses};
+};
+Elm.Native = Elm.Native || {};
+Elm.Native.Window = {};
+Elm.Native.Window.make = function make(localRuntime) {
+	localRuntime.Native = localRuntime.Native || {};
+	localRuntime.Native.Window = localRuntime.Native.Window || {};
+	if (localRuntime.Native.Window.values)
+	{
+		return localRuntime.Native.Window.values;
+	}
+
+	var NS = Elm.Native.Signal.make(localRuntime);
+	var Tuple2 = Elm.Native.Utils.make(localRuntime).Tuple2;
+
+
+	function getWidth()
+	{
+		return localRuntime.node.clientWidth;
+	}
+
+
+	function getHeight()
+	{
+		if (localRuntime.isFullscreen())
+		{
+			return window.innerHeight;
+		}
+		return localRuntime.node.clientHeight;
+	}
+
+
+	var dimensions = NS.input('Window.dimensions', Tuple2(getWidth(), getHeight()));
+
+
+	function resizeIfNeeded()
+	{
+		// Do not trigger event if the dimensions have not changed.
+		// This should be most of the time.
+		var w = getWidth();
+		var h = getHeight();
+		if (dimensions.value._0 === w && dimensions.value._1 === h)
+		{
+			return;
+		}
+
+		setTimeout(function() {
+			// Check again to see if the dimensions have changed.
+			// It is conceivable that the dimensions have changed
+			// again while some other event was being processed.
+			w = getWidth();
+			h = getHeight();
+			if (dimensions.value._0 === w && dimensions.value._1 === h)
+			{
+				return;
+			}
+			localRuntime.notify(dimensions.id, Tuple2(w, h));
+		}, 0);
+	}
+
+
+	localRuntime.addListener([dimensions.id], window, 'resize', resizeIfNeeded);
+
+
+	return localRuntime.Native.Window.values = {
+		dimensions: dimensions,
+		resizeIfNeeded: resizeIfNeeded
+	};
+};
+
+Elm.Window = Elm.Window || {};
+Elm.Window.make = function (_elm) {
+   "use strict";
+   _elm.Window = _elm.Window || {};
+   if (_elm.Window.values) return _elm.Window.values;
+   var _U = Elm.Native.Utils.make(_elm),$Basics = Elm.Basics.make(_elm),$Native$Window = Elm.Native.Window.make(_elm),$Signal = Elm.Signal.make(_elm);
+   var _op = {};
+   var dimensions = $Native$Window.dimensions;
+   var width = A2($Signal.map,$Basics.fst,dimensions);
+   var height = A2($Signal.map,$Basics.snd,dimensions);
+   return _elm.Window.values = {_op: _op,dimensions: dimensions,width: width,height: height};
+};
+Elm.PechaKucha = Elm.PechaKucha || {};
+Elm.PechaKucha.Actions = Elm.PechaKucha.Actions || {};
+Elm.PechaKucha.Actions.make = function (_elm) {
+   "use strict";
+   _elm.PechaKucha = _elm.PechaKucha || {};
+   _elm.PechaKucha.Actions = _elm.PechaKucha.Actions || {};
+   if (_elm.PechaKucha.Actions.values) return _elm.PechaKucha.Actions.values;
+   var _U = Elm.Native.Utils.make(_elm),
+   $Basics = Elm.Basics.make(_elm),
+   $Char = Elm.Char.make(_elm),
+   $Debug = Elm.Debug.make(_elm),
+   $List = Elm.List.make(_elm),
+   $Maybe = Elm.Maybe.make(_elm),
+   $Result = Elm.Result.make(_elm),
+   $Signal = Elm.Signal.make(_elm);
+   var _op = {};
+   var UrlHash = function (a) {    return {ctor: "UrlHash",_0: a};};
+   var hashAsAction = function (h) {    return UrlHash(h);};
+   var Scene = function (a) {    return {ctor: "Scene",_0: a};};
+   var KeyPressed = function (a) {    return {ctor: "KeyPressed",_0: a};};
+   var keypressAsAction = function (code) {    return KeyPressed(code);};
+   var Pause = {ctor: "Pause"};
+   var Run = {ctor: "Run"};
+   var Tick = {ctor: "Tick"};
+   var NextPage = {ctor: "NextPage"};
+   var PreviousPage = {ctor: "PreviousPage"};
+   var Noop = {ctor: "Noop"};
+   var arrowAsAction = function (_p0) {    var _p1 = _p0;var _p2 = _p1.x;return _U.eq(_p2,1) ? NextPage : _U.eq(_p2,-1) ? PreviousPage : Noop;};
+   return _elm.PechaKucha.Actions.values = {_op: _op
+                                           ,Noop: Noop
+                                           ,PreviousPage: PreviousPage
+                                           ,NextPage: NextPage
+                                           ,Tick: Tick
+                                           ,Run: Run
+                                           ,Pause: Pause
+                                           ,KeyPressed: KeyPressed
+                                           ,Scene: Scene
+                                           ,UrlHash: UrlHash
+                                           ,arrowAsAction: arrowAsAction
+                                           ,keypressAsAction: keypressAsAction
+                                           ,hashAsAction: hashAsAction};
+};
+Elm.Native = Elm.Native || {};
+Elm.Native.History = {};
+Elm.Native.History.make = function(localRuntime){
+
+  localRuntime.Native = localRuntime.Native || {};
+  localRuntime.Native.History = localRuntime.Native.History || {};
+
+  if (localRuntime.Native.History.values){
+    return localRuntime.Native.History.values;
+  }
+
+  var NS = Elm.Native.Signal.make(localRuntime);
+  var Task = Elm.Native.Task.make(localRuntime);
+  var Utils = Elm.Native.Utils.make(localRuntime);
+  var node = window;
+
+  // path : Signal String
+  var path = NS.input('History.path', window.location.pathname);
+
+  // length : Signal Int
+  var length = NS.input('History.length', window.history.length);
+
+  // hash : Signal String
+  var hash = NS.input('History.hash', window.location.hash);
+
+  localRuntime.addListener([path.id, length.id], node, 'popstate', function getPath(event){
+    localRuntime.notify(path.id, window.location.pathname);
+    localRuntime.notify(length.id, window.history.length);
+    localRuntime.notify(hash.id, window.location.hash);
+  });
+
+  localRuntime.addListener([hash.id], node, 'hashchange', function getHash(event){
+    localRuntime.notify(hash.id, window.location.hash);
+  });
+
+  // setPath : String -> Task error ()
+  var setPath = function(urlpath){
+    return Task.asyncFunction(function(callback){
+      setTimeout(function(){
+        localRuntime.notify(path.id, urlpath);
+        window.history.pushState({}, "", urlpath);
+        localRuntime.notify(hash.id, window.location.hash);
+        localRuntime.notify(length.id, window.history.length);
+
+      },0);
+      return callback(Task.succeed(Utils.Tuple0));
+    });
+  };
+
+  // replacePath : String -> Task error ()
+  var replacePath = function(urlpath){
+    return Task.asyncFunction(function(callback){
+      setTimeout(function(){
+        localRuntime.notify(path.id, urlpath);
+        window.history.replaceState({}, "", urlpath);
+        localRuntime.notify(hash.id, window.location.hash);
+        localRuntime.notify(length.id, window.history.length);
+      },0);
+      return callback(Task.succeed(Utils.Tuple0));
+    });
+  };
+
+  // go : Int -> Task error ()
+  var go = function(n){
+    return Task.asyncFunction(function(callback){
+      setTimeout(function(){
+        window.history.go(n);
+        localRuntime.notify(length.id, window.history.length);
+        localRuntime.notify(hash.id, window.location.hash);
+      }, 0);
+      return callback(Task.succeed(Utils.Tuple0));
+    });
+  };
+
+  // back : Task error ()
+  var back = Task.asyncFunction(function(callback){
+    setTimeout(function(){
+      localRuntime.notify(hash.id, window.location.hash);
+      window.history.back();
+      localRuntime.notify(length.id, window.history.length);
+
+    }, 0);
+    return callback(Task.succeed(Utils.Tuple0));
+  });
+
+  // forward : Task error ()
+  var forward = Task.asyncFunction(function(callback){
+    setTimeout(function(){
+      window.history.forward();
+      localRuntime.notify(length.id, window.history.length);
+      localRuntime.notify(hash.id, window.location.hash);
+    }, 0);
+    return callback(Task.succeed(Utils.Tuple0));
+  });
+
+
+
+  return {
+    path        : path,
+    setPath     : setPath,
+    replacePath : replacePath,
+    go          : go,
+    back        : back,
+    forward     : forward,
+    length      : length,
+    hash        : hash
+  };
+
+};
+
+Elm.History = Elm.History || {};
+Elm.History.make = function (_elm) {
+   "use strict";
+   _elm.History = _elm.History || {};
+   if (_elm.History.values) return _elm.History.values;
+   var _U = Elm.Native.Utils.make(_elm),
+   $Basics = Elm.Basics.make(_elm),
+   $Debug = Elm.Debug.make(_elm),
+   $List = Elm.List.make(_elm),
+   $Maybe = Elm.Maybe.make(_elm),
+   $Native$History = Elm.Native.History.make(_elm),
+   $Result = Elm.Result.make(_elm),
+   $Signal = Elm.Signal.make(_elm),
+   $Task = Elm.Task.make(_elm);
+   var _op = {};
+   var path = $Native$History.path;
+   var hash = $Native$History.hash;
+   var length = $Native$History.length;
+   var forward = $Native$History.forward;
+   var back = $Native$History.back;
+   var go = $Native$History.go;
+   var replacePath = $Native$History.replacePath;
+   var setPath = $Native$History.setPath;
+   return _elm.History.values = {_op: _op,setPath: setPath,replacePath: replacePath,go: go,back: back,forward: forward,length: length,hash: hash,path: path};
+};
 Elm.Html = Elm.Html || {};
 Elm.Html.Attributes = Elm.Html.Attributes || {};
 Elm.Html.Attributes.make = function (_elm) {
@@ -10860,6 +11187,33 @@ Elm.Monocle.Lens.make = function (_elm) {
    return _elm.Monocle.Lens.values = {_op: _op,fromIso: fromIso,compose: compose,modify: modify,zip: zip,modifyAndMerge: modifyAndMerge,Lens: Lens};
 };
 Elm.PechaKucha = Elm.PechaKucha || {};
+Elm.PechaKucha.Config = Elm.PechaKucha.Config || {};
+Elm.PechaKucha.Config.make = function (_elm) {
+   "use strict";
+   _elm.PechaKucha = _elm.PechaKucha || {};
+   _elm.PechaKucha.Config = _elm.PechaKucha.Config || {};
+   if (_elm.PechaKucha.Config.values) return _elm.PechaKucha.Config.values;
+   var _U = Elm.Native.Utils.make(_elm),
+   $Basics = Elm.Basics.make(_elm),
+   $Debug = Elm.Debug.make(_elm),
+   $List = Elm.List.make(_elm),
+   $Maybe = Elm.Maybe.make(_elm),
+   $Result = Elm.Result.make(_elm),
+   $Signal = Elm.Signal.make(_elm);
+   var _op = {};
+   var pageTimeout = 20;
+   var fps = 1;
+   var pageFrames = pageTimeout * fps;
+   var roundFrames = (pageTimeout / 5 | 0) * fps;
+   var initialDelay = 2 * fps;
+   return _elm.PechaKucha.Config.values = {_op: _op
+                                          ,fps: fps
+                                          ,pageTimeout: pageTimeout
+                                          ,pageFrames: pageFrames
+                                          ,roundFrames: roundFrames
+                                          ,initialDelay: initialDelay};
+};
+Elm.PechaKucha = Elm.PechaKucha || {};
 Elm.PechaKucha.PageType1 = Elm.PechaKucha.PageType1 || {};
 Elm.PechaKucha.PageType1.make = function (_elm) {
    "use strict";
@@ -10867,12 +11221,12 @@ Elm.PechaKucha.PageType1.make = function (_elm) {
    _elm.PechaKucha.PageType1 = _elm.PechaKucha.PageType1 || {};
    if (_elm.PechaKucha.PageType1.values) return _elm.PechaKucha.PageType1.values;
    var _U = Elm.Native.Utils.make(_elm),
-   $Actions = Elm.Actions.make(_elm),
    $Basics = Elm.Basics.make(_elm),
    $Debug = Elm.Debug.make(_elm),
    $Effects = Elm.Effects.make(_elm),
    $List = Elm.List.make(_elm),
    $Maybe = Elm.Maybe.make(_elm),
+   $PechaKucha$Actions = Elm.PechaKucha.Actions.make(_elm),
    $Result = Elm.Result.make(_elm),
    $Signal = Elm.Signal.make(_elm);
    var _op = {};
@@ -10895,13 +11249,13 @@ Elm.PechaKucha.Page01.make = function (_elm) {
    _elm.PechaKucha.Page01 = _elm.PechaKucha.Page01 || {};
    if (_elm.PechaKucha.Page01.values) return _elm.PechaKucha.Page01.values;
    var _U = Elm.Native.Utils.make(_elm),
-   $Actions = Elm.Actions.make(_elm),
    $Basics = Elm.Basics.make(_elm),
    $Debug = Elm.Debug.make(_elm),
    $Html = Elm.Html.make(_elm),
    $Html$Attributes = Elm.Html.Attributes.make(_elm),
    $List = Elm.List.make(_elm),
    $Maybe = Elm.Maybe.make(_elm),
+   $PechaKucha$Actions = Elm.PechaKucha.Actions.make(_elm),
    $PechaKucha$PageType1 = Elm.PechaKucha.PageType1.make(_elm),
    $Result = Elm.Result.make(_elm),
    $Signal = Elm.Signal.make(_elm);
@@ -10910,10 +11264,10 @@ Elm.PechaKucha.Page01.make = function (_elm) {
    var init = $PechaKucha$PageType1.init;
    var scene4 = A2($Html.div,
    _U.list([$Html$Attributes.$class("scene4 blue animated fadeIn"),$Html$Attributes.key("s0.4")]),
-   _U.list([$Html.text("lang and arch")]));
+   _U.list([$Html.text("full lang and arch")]));
    var scene3 = A2($Html.div,
    _U.list([$Html$Attributes.$class("scene3 pink animated fadeIn"),$Html$Attributes.key("s0.3")]),
-   _U.list([$Html.text("for frontend")]));
+   _U.list([$Html.text("transpiles to JS")]));
    var scene2 = A2($Html.div,
    _U.list([$Html$Attributes.$class("scene2 green  animated fadeIn"),$Html$Attributes.key("s0.2")]),
    _U.list([$Html.text("is reactive")]));
@@ -10940,13 +11294,13 @@ Elm.PechaKucha.Page02.make = function (_elm) {
    _elm.PechaKucha.Page02 = _elm.PechaKucha.Page02 || {};
    if (_elm.PechaKucha.Page02.values) return _elm.PechaKucha.Page02.values;
    var _U = Elm.Native.Utils.make(_elm),
-   $Actions = Elm.Actions.make(_elm),
    $Basics = Elm.Basics.make(_elm),
    $Debug = Elm.Debug.make(_elm),
    $Html = Elm.Html.make(_elm),
    $Html$Attributes = Elm.Html.Attributes.make(_elm),
    $List = Elm.List.make(_elm),
    $Maybe = Elm.Maybe.make(_elm),
+   $PechaKucha$Actions = Elm.PechaKucha.Actions.make(_elm),
    $PechaKucha$PageType1 = Elm.PechaKucha.PageType1.make(_elm),
    $Result = Elm.Result.make(_elm),
    $Signal = Elm.Signal.make(_elm);
@@ -10985,13 +11339,13 @@ Elm.PechaKucha.Page03.make = function (_elm) {
    _elm.PechaKucha.Page03 = _elm.PechaKucha.Page03 || {};
    if (_elm.PechaKucha.Page03.values) return _elm.PechaKucha.Page03.values;
    var _U = Elm.Native.Utils.make(_elm),
-   $Actions = Elm.Actions.make(_elm),
    $Basics = Elm.Basics.make(_elm),
    $Debug = Elm.Debug.make(_elm),
    $Html = Elm.Html.make(_elm),
    $Html$Attributes = Elm.Html.Attributes.make(_elm),
    $List = Elm.List.make(_elm),
    $Maybe = Elm.Maybe.make(_elm),
+   $PechaKucha$Actions = Elm.PechaKucha.Actions.make(_elm),
    $PechaKucha$PageType1 = Elm.PechaKucha.PageType1.make(_elm),
    $Result = Elm.Result.make(_elm),
    $Signal = Elm.Signal.make(_elm);
@@ -11030,13 +11384,13 @@ Elm.PechaKucha.Page04.make = function (_elm) {
    _elm.PechaKucha.Page04 = _elm.PechaKucha.Page04 || {};
    if (_elm.PechaKucha.Page04.values) return _elm.PechaKucha.Page04.values;
    var _U = Elm.Native.Utils.make(_elm),
-   $Actions = Elm.Actions.make(_elm),
    $Basics = Elm.Basics.make(_elm),
    $Debug = Elm.Debug.make(_elm),
    $Html = Elm.Html.make(_elm),
    $Html$Attributes = Elm.Html.Attributes.make(_elm),
    $List = Elm.List.make(_elm),
    $Maybe = Elm.Maybe.make(_elm),
+   $PechaKucha$Actions = Elm.PechaKucha.Actions.make(_elm),
    $PechaKucha$PageType1 = Elm.PechaKucha.PageType1.make(_elm),
    $Result = Elm.Result.make(_elm),
    $Signal = Elm.Signal.make(_elm);
@@ -11075,13 +11429,13 @@ Elm.PechaKucha.Page05.make = function (_elm) {
    _elm.PechaKucha.Page05 = _elm.PechaKucha.Page05 || {};
    if (_elm.PechaKucha.Page05.values) return _elm.PechaKucha.Page05.values;
    var _U = Elm.Native.Utils.make(_elm),
-   $Actions = Elm.Actions.make(_elm),
    $Basics = Elm.Basics.make(_elm),
    $Debug = Elm.Debug.make(_elm),
    $Html = Elm.Html.make(_elm),
    $Html$Attributes = Elm.Html.Attributes.make(_elm),
    $List = Elm.List.make(_elm),
    $Maybe = Elm.Maybe.make(_elm),
+   $PechaKucha$Actions = Elm.PechaKucha.Actions.make(_elm),
    $PechaKucha$PageType1 = Elm.PechaKucha.PageType1.make(_elm),
    $Result = Elm.Result.make(_elm),
    $Signal = Elm.Signal.make(_elm);
@@ -11120,13 +11474,13 @@ Elm.PechaKucha.Page06.make = function (_elm) {
    _elm.PechaKucha.Page06 = _elm.PechaKucha.Page06 || {};
    if (_elm.PechaKucha.Page06.values) return _elm.PechaKucha.Page06.values;
    var _U = Elm.Native.Utils.make(_elm),
-   $Actions = Elm.Actions.make(_elm),
    $Basics = Elm.Basics.make(_elm),
    $Debug = Elm.Debug.make(_elm),
    $Html = Elm.Html.make(_elm),
    $Html$Attributes = Elm.Html.Attributes.make(_elm),
    $List = Elm.List.make(_elm),
    $Maybe = Elm.Maybe.make(_elm),
+   $PechaKucha$Actions = Elm.PechaKucha.Actions.make(_elm),
    $PechaKucha$PageType1 = Elm.PechaKucha.PageType1.make(_elm),
    $Result = Elm.Result.make(_elm),
    $Signal = Elm.Signal.make(_elm);
@@ -11165,13 +11519,13 @@ Elm.PechaKucha.Page07.make = function (_elm) {
    _elm.PechaKucha.Page07 = _elm.PechaKucha.Page07 || {};
    if (_elm.PechaKucha.Page07.values) return _elm.PechaKucha.Page07.values;
    var _U = Elm.Native.Utils.make(_elm),
-   $Actions = Elm.Actions.make(_elm),
    $Basics = Elm.Basics.make(_elm),
    $Debug = Elm.Debug.make(_elm),
    $Html = Elm.Html.make(_elm),
    $Html$Attributes = Elm.Html.Attributes.make(_elm),
    $List = Elm.List.make(_elm),
    $Maybe = Elm.Maybe.make(_elm),
+   $PechaKucha$Actions = Elm.PechaKucha.Actions.make(_elm),
    $PechaKucha$PageType1 = Elm.PechaKucha.PageType1.make(_elm),
    $Result = Elm.Result.make(_elm),
    $Signal = Elm.Signal.make(_elm);
@@ -11208,13 +11562,13 @@ Elm.PechaKucha.Page08.make = function (_elm) {
    _elm.PechaKucha.Page08 = _elm.PechaKucha.Page08 || {};
    if (_elm.PechaKucha.Page08.values) return _elm.PechaKucha.Page08.values;
    var _U = Elm.Native.Utils.make(_elm),
-   $Actions = Elm.Actions.make(_elm),
    $Basics = Elm.Basics.make(_elm),
    $Debug = Elm.Debug.make(_elm),
    $Html = Elm.Html.make(_elm),
    $Html$Attributes = Elm.Html.Attributes.make(_elm),
    $List = Elm.List.make(_elm),
    $Maybe = Elm.Maybe.make(_elm),
+   $PechaKucha$Actions = Elm.PechaKucha.Actions.make(_elm),
    $PechaKucha$PageType1 = Elm.PechaKucha.PageType1.make(_elm),
    $Result = Elm.Result.make(_elm),
    $Signal = Elm.Signal.make(_elm);
@@ -11253,13 +11607,13 @@ Elm.PechaKucha.Page09.make = function (_elm) {
    _elm.PechaKucha.Page09 = _elm.PechaKucha.Page09 || {};
    if (_elm.PechaKucha.Page09.values) return _elm.PechaKucha.Page09.values;
    var _U = Elm.Native.Utils.make(_elm),
-   $Actions = Elm.Actions.make(_elm),
    $Basics = Elm.Basics.make(_elm),
    $Debug = Elm.Debug.make(_elm),
    $Html = Elm.Html.make(_elm),
    $Html$Attributes = Elm.Html.Attributes.make(_elm),
    $List = Elm.List.make(_elm),
    $Maybe = Elm.Maybe.make(_elm),
+   $PechaKucha$Actions = Elm.PechaKucha.Actions.make(_elm),
    $PechaKucha$PageType1 = Elm.PechaKucha.PageType1.make(_elm),
    $Result = Elm.Result.make(_elm),
    $Signal = Elm.Signal.make(_elm);
@@ -11298,13 +11652,13 @@ Elm.PechaKucha.Page10.make = function (_elm) {
    _elm.PechaKucha.Page10 = _elm.PechaKucha.Page10 || {};
    if (_elm.PechaKucha.Page10.values) return _elm.PechaKucha.Page10.values;
    var _U = Elm.Native.Utils.make(_elm),
-   $Actions = Elm.Actions.make(_elm),
    $Basics = Elm.Basics.make(_elm),
    $Debug = Elm.Debug.make(_elm),
    $Html = Elm.Html.make(_elm),
    $Html$Attributes = Elm.Html.Attributes.make(_elm),
    $List = Elm.List.make(_elm),
    $Maybe = Elm.Maybe.make(_elm),
+   $PechaKucha$Actions = Elm.PechaKucha.Actions.make(_elm),
    $PechaKucha$PageType1 = Elm.PechaKucha.PageType1.make(_elm),
    $Result = Elm.Result.make(_elm),
    $Signal = Elm.Signal.make(_elm);
@@ -11343,13 +11697,13 @@ Elm.PechaKucha.Page11.make = function (_elm) {
    _elm.PechaKucha.Page11 = _elm.PechaKucha.Page11 || {};
    if (_elm.PechaKucha.Page11.values) return _elm.PechaKucha.Page11.values;
    var _U = Elm.Native.Utils.make(_elm),
-   $Actions = Elm.Actions.make(_elm),
    $Basics = Elm.Basics.make(_elm),
    $Debug = Elm.Debug.make(_elm),
    $Html = Elm.Html.make(_elm),
    $Html$Attributes = Elm.Html.Attributes.make(_elm),
    $List = Elm.List.make(_elm),
    $Maybe = Elm.Maybe.make(_elm),
+   $PechaKucha$Actions = Elm.PechaKucha.Actions.make(_elm),
    $PechaKucha$PageType1 = Elm.PechaKucha.PageType1.make(_elm),
    $Result = Elm.Result.make(_elm),
    $Signal = Elm.Signal.make(_elm);
@@ -11388,13 +11742,13 @@ Elm.PechaKucha.Page12.make = function (_elm) {
    _elm.PechaKucha.Page12 = _elm.PechaKucha.Page12 || {};
    if (_elm.PechaKucha.Page12.values) return _elm.PechaKucha.Page12.values;
    var _U = Elm.Native.Utils.make(_elm),
-   $Actions = Elm.Actions.make(_elm),
    $Basics = Elm.Basics.make(_elm),
    $Debug = Elm.Debug.make(_elm),
    $Html = Elm.Html.make(_elm),
    $Html$Attributes = Elm.Html.Attributes.make(_elm),
    $List = Elm.List.make(_elm),
    $Maybe = Elm.Maybe.make(_elm),
+   $PechaKucha$Actions = Elm.PechaKucha.Actions.make(_elm),
    $PechaKucha$PageType1 = Elm.PechaKucha.PageType1.make(_elm),
    $Result = Elm.Result.make(_elm),
    $Signal = Elm.Signal.make(_elm);
@@ -11433,13 +11787,13 @@ Elm.PechaKucha.Page13.make = function (_elm) {
    _elm.PechaKucha.Page13 = _elm.PechaKucha.Page13 || {};
    if (_elm.PechaKucha.Page13.values) return _elm.PechaKucha.Page13.values;
    var _U = Elm.Native.Utils.make(_elm),
-   $Actions = Elm.Actions.make(_elm),
    $Basics = Elm.Basics.make(_elm),
    $Debug = Elm.Debug.make(_elm),
    $Html = Elm.Html.make(_elm),
    $Html$Attributes = Elm.Html.Attributes.make(_elm),
    $List = Elm.List.make(_elm),
    $Maybe = Elm.Maybe.make(_elm),
+   $PechaKucha$Actions = Elm.PechaKucha.Actions.make(_elm),
    $PechaKucha$PageType1 = Elm.PechaKucha.PageType1.make(_elm),
    $Result = Elm.Result.make(_elm),
    $Signal = Elm.Signal.make(_elm);
@@ -11478,13 +11832,13 @@ Elm.PechaKucha.Page14.make = function (_elm) {
    _elm.PechaKucha.Page14 = _elm.PechaKucha.Page14 || {};
    if (_elm.PechaKucha.Page14.values) return _elm.PechaKucha.Page14.values;
    var _U = Elm.Native.Utils.make(_elm),
-   $Actions = Elm.Actions.make(_elm),
    $Basics = Elm.Basics.make(_elm),
    $Debug = Elm.Debug.make(_elm),
    $Html = Elm.Html.make(_elm),
    $Html$Attributes = Elm.Html.Attributes.make(_elm),
    $List = Elm.List.make(_elm),
    $Maybe = Elm.Maybe.make(_elm),
+   $PechaKucha$Actions = Elm.PechaKucha.Actions.make(_elm),
    $PechaKucha$PageType1 = Elm.PechaKucha.PageType1.make(_elm),
    $Result = Elm.Result.make(_elm),
    $Signal = Elm.Signal.make(_elm);
@@ -11524,13 +11878,13 @@ Elm.PechaKucha.Page15.make = function (_elm) {
    _elm.PechaKucha.Page15 = _elm.PechaKucha.Page15 || {};
    if (_elm.PechaKucha.Page15.values) return _elm.PechaKucha.Page15.values;
    var _U = Elm.Native.Utils.make(_elm),
-   $Actions = Elm.Actions.make(_elm),
    $Basics = Elm.Basics.make(_elm),
    $Debug = Elm.Debug.make(_elm),
    $Html = Elm.Html.make(_elm),
    $Html$Attributes = Elm.Html.Attributes.make(_elm),
    $List = Elm.List.make(_elm),
    $Maybe = Elm.Maybe.make(_elm),
+   $PechaKucha$Actions = Elm.PechaKucha.Actions.make(_elm),
    $PechaKucha$PageType1 = Elm.PechaKucha.PageType1.make(_elm),
    $Result = Elm.Result.make(_elm),
    $Signal = Elm.Signal.make(_elm);
@@ -11569,13 +11923,13 @@ Elm.PechaKucha.Page16.make = function (_elm) {
    _elm.PechaKucha.Page16 = _elm.PechaKucha.Page16 || {};
    if (_elm.PechaKucha.Page16.values) return _elm.PechaKucha.Page16.values;
    var _U = Elm.Native.Utils.make(_elm),
-   $Actions = Elm.Actions.make(_elm),
    $Basics = Elm.Basics.make(_elm),
    $Debug = Elm.Debug.make(_elm),
    $Html = Elm.Html.make(_elm),
    $Html$Attributes = Elm.Html.Attributes.make(_elm),
    $List = Elm.List.make(_elm),
    $Maybe = Elm.Maybe.make(_elm),
+   $PechaKucha$Actions = Elm.PechaKucha.Actions.make(_elm),
    $PechaKucha$PageType1 = Elm.PechaKucha.PageType1.make(_elm),
    $Result = Elm.Result.make(_elm),
    $Signal = Elm.Signal.make(_elm);
@@ -11615,13 +11969,13 @@ Elm.PechaKucha.Page17.make = function (_elm) {
    _elm.PechaKucha.Page17 = _elm.PechaKucha.Page17 || {};
    if (_elm.PechaKucha.Page17.values) return _elm.PechaKucha.Page17.values;
    var _U = Elm.Native.Utils.make(_elm),
-   $Actions = Elm.Actions.make(_elm),
    $Basics = Elm.Basics.make(_elm),
    $Debug = Elm.Debug.make(_elm),
    $Html = Elm.Html.make(_elm),
    $Html$Attributes = Elm.Html.Attributes.make(_elm),
    $List = Elm.List.make(_elm),
    $Maybe = Elm.Maybe.make(_elm),
+   $PechaKucha$Actions = Elm.PechaKucha.Actions.make(_elm),
    $PechaKucha$PageType1 = Elm.PechaKucha.PageType1.make(_elm),
    $Result = Elm.Result.make(_elm),
    $Signal = Elm.Signal.make(_elm);
@@ -11668,13 +12022,13 @@ Elm.PechaKucha.Page18.make = function (_elm) {
    _elm.PechaKucha.Page18 = _elm.PechaKucha.Page18 || {};
    if (_elm.PechaKucha.Page18.values) return _elm.PechaKucha.Page18.values;
    var _U = Elm.Native.Utils.make(_elm),
-   $Actions = Elm.Actions.make(_elm),
    $Basics = Elm.Basics.make(_elm),
    $Debug = Elm.Debug.make(_elm),
    $Html = Elm.Html.make(_elm),
    $Html$Attributes = Elm.Html.Attributes.make(_elm),
    $List = Elm.List.make(_elm),
    $Maybe = Elm.Maybe.make(_elm),
+   $PechaKucha$Actions = Elm.PechaKucha.Actions.make(_elm),
    $PechaKucha$PageType1 = Elm.PechaKucha.PageType1.make(_elm),
    $Result = Elm.Result.make(_elm),
    $Signal = Elm.Signal.make(_elm);
@@ -11722,13 +12076,13 @@ Elm.PechaKucha.Page19.make = function (_elm) {
    _elm.PechaKucha.Page19 = _elm.PechaKucha.Page19 || {};
    if (_elm.PechaKucha.Page19.values) return _elm.PechaKucha.Page19.values;
    var _U = Elm.Native.Utils.make(_elm),
-   $Actions = Elm.Actions.make(_elm),
    $Basics = Elm.Basics.make(_elm),
    $Debug = Elm.Debug.make(_elm),
    $Html = Elm.Html.make(_elm),
    $Html$Attributes = Elm.Html.Attributes.make(_elm),
    $List = Elm.List.make(_elm),
    $Maybe = Elm.Maybe.make(_elm),
+   $PechaKucha$Actions = Elm.PechaKucha.Actions.make(_elm),
    $PechaKucha$PageType1 = Elm.PechaKucha.PageType1.make(_elm),
    $Result = Elm.Result.make(_elm),
    $Signal = Elm.Signal.make(_elm);
@@ -11776,13 +12130,13 @@ Elm.PechaKucha.Page20.make = function (_elm) {
    _elm.PechaKucha.Page20 = _elm.PechaKucha.Page20 || {};
    if (_elm.PechaKucha.Page20.values) return _elm.PechaKucha.Page20.values;
    var _U = Elm.Native.Utils.make(_elm),
-   $Actions = Elm.Actions.make(_elm),
    $Basics = Elm.Basics.make(_elm),
    $Debug = Elm.Debug.make(_elm),
    $Html = Elm.Html.make(_elm),
    $Html$Attributes = Elm.Html.Attributes.make(_elm),
    $List = Elm.List.make(_elm),
    $Maybe = Elm.Maybe.make(_elm),
+   $PechaKucha$Actions = Elm.PechaKucha.Actions.make(_elm),
    $PechaKucha$PageType1 = Elm.PechaKucha.PageType1.make(_elm),
    $Result = Elm.Result.make(_elm),
    $Signal = Elm.Signal.make(_elm);
@@ -11791,16 +12145,16 @@ Elm.PechaKucha.Page20.make = function (_elm) {
    var init = $PechaKucha$PageType1.init;
    var scene4 = A2($Html.div,
    _U.list([$Html$Attributes.$class("scene4 blue animated fadeIn"),$Html$Attributes.key("s0.4")]),
-   _U.list([$Html.text("neat package manager")]));
+   _U.list([$Html.text("neat tools and libs")]));
    var scene3 = A2($Html.div,
    _U.list([$Html$Attributes.$class("scene3 pink animated fadeIn"),$Html$Attributes.key("s0.3")]),
    _U.list([$Html.text("blazing fast html lib")]));
    var scene2 = A2($Html.div,
    _U.list([$Html$Attributes.$class("scene2 green  animated fadeIn"),$Html$Attributes.key("s0.2")]),
-   _U.list([$Html.text("good core library")]));
+   _U.list([$Html.text("clever architecture")]));
    var scene1 = A2($Html.div,
    _U.list([$Html$Attributes.$class("scene1 orange animated fadeIn"),$Html$Attributes.key("s0.1")]),
-   _U.list([$Html.text("elm-to-js transpiler")]));
+   _U.list([$Html.text("clean and safe lang")]));
    var scene0 = A2($Html.div,_U.list([$Html$Attributes.$class("scene0"),$Html$Attributes.key("s0.0")]),_U.list([$Html.text("With Elm you get")]));
    var view = F2(function (address,model) {
       var _p0 = model.scene;
@@ -11821,7 +12175,6 @@ Elm.PechaKucha.Pages.make = function (_elm) {
    _elm.PechaKucha.Pages = _elm.PechaKucha.Pages || {};
    if (_elm.PechaKucha.Pages.values) return _elm.PechaKucha.Pages.values;
    var _U = Elm.Native.Utils.make(_elm),
-   $Actions = Elm.Actions.make(_elm),
    $Basics = Elm.Basics.make(_elm),
    $Debug = Elm.Debug.make(_elm),
    $Effects = Elm.Effects.make(_elm),
@@ -11829,6 +12182,7 @@ Elm.PechaKucha.Pages.make = function (_elm) {
    $List = Elm.List.make(_elm),
    $Maybe = Elm.Maybe.make(_elm),
    $Monocle$Lens = Elm.Monocle.Lens.make(_elm),
+   $PechaKucha$Actions = Elm.PechaKucha.Actions.make(_elm),
    $PechaKucha$Page01 = Elm.PechaKucha.Page01.make(_elm),
    $PechaKucha$Page02 = Elm.PechaKucha.Page02.make(_elm),
    $PechaKucha$Page03 = Elm.PechaKucha.Page03.make(_elm),
@@ -12089,140 +12443,136 @@ Elm.PechaKucha.Pages.make = function (_elm) {
                                          ,minPageIndex: minPageIndex
                                          ,Model: Model};
 };
-Elm.Native = Elm.Native || {};
-Elm.Native.History = {};
-Elm.Native.History.make = function(localRuntime){
-
-  localRuntime.Native = localRuntime.Native || {};
-  localRuntime.Native.History = localRuntime.Native.History || {};
-
-  if (localRuntime.Native.History.values){
-    return localRuntime.Native.History.values;
-  }
-
-  var NS = Elm.Native.Signal.make(localRuntime);
-  var Task = Elm.Native.Task.make(localRuntime);
-  var Utils = Elm.Native.Utils.make(localRuntime);
-  var node = window;
-
-  // path : Signal String
-  var path = NS.input('History.path', window.location.pathname);
-
-  // length : Signal Int
-  var length = NS.input('History.length', window.history.length);
-
-  // hash : Signal String
-  var hash = NS.input('History.hash', window.location.hash);
-
-  localRuntime.addListener([path.id, length.id], node, 'popstate', function getPath(event){
-    localRuntime.notify(path.id, window.location.pathname);
-    localRuntime.notify(length.id, window.history.length);
-    localRuntime.notify(hash.id, window.location.hash);
-  });
-
-  localRuntime.addListener([hash.id], node, 'hashchange', function getHash(event){
-    localRuntime.notify(hash.id, window.location.hash);
-  });
-
-  // setPath : String -> Task error ()
-  var setPath = function(urlpath){
-    return Task.asyncFunction(function(callback){
-      setTimeout(function(){
-        localRuntime.notify(path.id, urlpath);
-        window.history.pushState({}, "", urlpath);
-        localRuntime.notify(hash.id, window.location.hash);
-        localRuntime.notify(length.id, window.history.length);
-
-      },0);
-      return callback(Task.succeed(Utils.Tuple0));
-    });
-  };
-
-  // replacePath : String -> Task error ()
-  var replacePath = function(urlpath){
-    return Task.asyncFunction(function(callback){
-      setTimeout(function(){
-        localRuntime.notify(path.id, urlpath);
-        window.history.replaceState({}, "", urlpath);
-        localRuntime.notify(hash.id, window.location.hash);
-        localRuntime.notify(length.id, window.history.length);
-      },0);
-      return callback(Task.succeed(Utils.Tuple0));
-    });
-  };
-
-  // go : Int -> Task error ()
-  var go = function(n){
-    return Task.asyncFunction(function(callback){
-      setTimeout(function(){
-        window.history.go(n);
-        localRuntime.notify(length.id, window.history.length);
-        localRuntime.notify(hash.id, window.location.hash);
-      }, 0);
-      return callback(Task.succeed(Utils.Tuple0));
-    });
-  };
-
-  // back : Task error ()
-  var back = Task.asyncFunction(function(callback){
-    setTimeout(function(){
-      localRuntime.notify(hash.id, window.location.hash);
-      window.history.back();
-      localRuntime.notify(length.id, window.history.length);
-
-    }, 0);
-    return callback(Task.succeed(Utils.Tuple0));
-  });
-
-  // forward : Task error ()
-  var forward = Task.asyncFunction(function(callback){
-    setTimeout(function(){
-      window.history.forward();
-      localRuntime.notify(length.id, window.history.length);
-      localRuntime.notify(hash.id, window.location.hash);
-    }, 0);
-    return callback(Task.succeed(Utils.Tuple0));
-  });
-
-
-
-  return {
-    path        : path,
-    setPath     : setPath,
-    replacePath : replacePath,
-    go          : go,
-    back        : back,
-    forward     : forward,
-    length      : length,
-    hash        : hash
-  };
-
-};
-
-Elm.History = Elm.History || {};
-Elm.History.make = function (_elm) {
+Elm.PechaKucha = Elm.PechaKucha || {};
+Elm.PechaKucha.Model = Elm.PechaKucha.Model || {};
+Elm.PechaKucha.Model.make = function (_elm) {
    "use strict";
-   _elm.History = _elm.History || {};
-   if (_elm.History.values) return _elm.History.values;
+   _elm.PechaKucha = _elm.PechaKucha || {};
+   _elm.PechaKucha.Model = _elm.PechaKucha.Model || {};
+   if (_elm.PechaKucha.Model.values) return _elm.PechaKucha.Model.values;
    var _U = Elm.Native.Utils.make(_elm),
    $Basics = Elm.Basics.make(_elm),
    $Debug = Elm.Debug.make(_elm),
    $List = Elm.List.make(_elm),
    $Maybe = Elm.Maybe.make(_elm),
-   $Native$History = Elm.Native.History.make(_elm),
+   $Monocle$Lens = Elm.Monocle.Lens.make(_elm),
+   $PechaKucha$Pages = Elm.PechaKucha.Pages.make(_elm),
    $Result = Elm.Result.make(_elm),
-   $Signal = Elm.Signal.make(_elm),
-   $Task = Elm.Task.make(_elm);
+   $Signal = Elm.Signal.make(_elm);
    var _op = {};
-   var path = $Native$History.path;
-   var hash = $Native$History.hash;
-   var length = $Native$History.length;
-   var forward = $Native$History.forward;
-   var back = $Native$History.back;
-   var go = $Native$History.go;
-   var replacePath = $Native$History.replacePath;
-   var setPath = $Native$History.setPath;
-   return _elm.History.values = {_op: _op,setPath: setPath,replacePath: replacePath,go: go,back: back,forward: forward,length: length,hash: hash,path: path};
+   var stateLens = A2($Monocle$Lens.Lens,function (_) {    return _.state;},F2(function (x,m) {    return _U.update(m,{state: x});}));
+   var windowLens = A2($Monocle$Lens.Lens,function (_) {    return _.window;},F2(function (x,m) {    return _U.update(m,{window: x});}));
+   var pagesLens = A2($Monocle$Lens.Lens,function (_) {    return _.pages;},F2(function (x,m) {    return _U.update(m,{pages: x});}));
+   var indexLens = A2($Monocle$Lens.compose,pagesLens,$PechaKucha$Pages.indexLens);
+   var delayedLens = A2($Monocle$Lens.Lens,function (_) {    return _.delayed;},F2(function (x,m) {    return _U.update(m,{delayed: x});}));
+   var clockLens = A2($Monocle$Lens.Lens,function (_) {    return _.clock;},F2(function (x,m) {    return _U.update(m,{clock: x});}));
+   var Model = F4(function (a,b,c,d) {    return {clock: a,pages: b,state: c,delayed: d};});
+   var Terminated = {ctor: "Terminated"};
+   var Running = {ctor: "Running"};
+   var Paused = {ctor: "Paused"};
+   var Idle = {ctor: "Idle"};
+   return _elm.PechaKucha.Model.values = {_op: _op
+                                         ,Idle: Idle
+                                         ,Paused: Paused
+                                         ,Running: Running
+                                         ,Terminated: Terminated
+                                         ,Model: Model
+                                         ,clockLens: clockLens
+                                         ,delayedLens: delayedLens
+                                         ,pagesLens: pagesLens
+                                         ,indexLens: indexLens
+                                         ,windowLens: windowLens
+                                         ,stateLens: stateLens};
+};
+Elm.PechaKucha = Elm.PechaKucha || {};
+Elm.PechaKucha.Overlay = Elm.PechaKucha.Overlay || {};
+Elm.PechaKucha.Overlay.make = function (_elm) {
+   "use strict";
+   _elm.PechaKucha = _elm.PechaKucha || {};
+   _elm.PechaKucha.Overlay = _elm.PechaKucha.Overlay || {};
+   if (_elm.PechaKucha.Overlay.values) return _elm.PechaKucha.Overlay.values;
+   var _U = Elm.Native.Utils.make(_elm),
+   $Basics = Elm.Basics.make(_elm),
+   $Color = Elm.Color.make(_elm),
+   $Debug = Elm.Debug.make(_elm),
+   $Graphics$Collage = Elm.Graphics.Collage.make(_elm),
+   $Html = Elm.Html.make(_elm),
+   $Html$Attributes = Elm.Html.Attributes.make(_elm),
+   $Html$Events = Elm.Html.Events.make(_elm),
+   $List = Elm.List.make(_elm),
+   $Maybe = Elm.Maybe.make(_elm),
+   $PechaKucha$Actions = Elm.PechaKucha.Actions.make(_elm),
+   $PechaKucha$Config = Elm.PechaKucha.Config.make(_elm),
+   $PechaKucha$Model = Elm.PechaKucha.Model.make(_elm),
+   $Result = Elm.Result.make(_elm),
+   $Signal = Elm.Signal.make(_elm);
+   var _op = {};
+   var opacityStep = 0.3 / (5 * $PechaKucha$Config.fps);
+   var clockLineStyle = _U.update($Graphics$Collage.defaultLine,{color: $Color.gray,width: 10});
+   var clock = F2(function (address,model) {
+      var angle = $Basics.degrees($Basics.toFloat((-360 / $PechaKucha$Config.pageTimeout | 0) * (model.clock / $PechaKucha$Config.fps | 0)));
+      return A2($Html.div,
+      _U.list([$Html$Attributes.$class("clock"),A2($Html$Events.onClick,address,$PechaKucha$Actions.Pause)]),
+      _U.list([$Html.fromElement(A3($Graphics$Collage.collage,
+      240,
+      240,
+      _U.list([A2($Graphics$Collage.alpha,
+      0.1,
+      $Graphics$Collage.group(_U.list([A2($Graphics$Collage.outlined,clockLineStyle,$Graphics$Collage.circle(100))
+                                      ,A2($Graphics$Collage.rotate,
+                                      angle,
+                                      A2($Graphics$Collage.traced,
+                                      clockLineStyle,
+                                      $Graphics$Collage.path(_U.list([{ctor: "_Tuple2",_0: 0,_1: 0},{ctor: "_Tuple2",_0: 0,_1: 95}]))))])))])))]));
+   });
+   var view = F2(function (address,model) {
+      var _p0 = model.state;
+      switch (_p0.ctor)
+      {case "Idle": return A2($Html.div,
+           _U.list([$Html$Attributes.$class("overlay"),A2($Html$Events.onClick,address,$PechaKucha$Actions.Run)]),
+           _U.list([A2($Html.span,_U.list([$Html$Attributes.$class("fa fa-play")]),_U.list([]))]));
+         case "Paused": return A2($Html.div,
+           _U.list([$Html$Attributes.$class("overlay"),A2($Html$Events.onClick,address,$PechaKucha$Actions.Run)]),
+           _U.list([A2($Html.span,_U.list([$Html$Attributes.$class("fa fa-pause")]),_U.list([]))]));
+         case "Terminated": return A2($Html.div,
+           _U.list([$Html$Attributes.$class("overlay"),A2($Html$Events.onClick,address,$PechaKucha$Actions.Run)]),
+           _U.list([A2($Html.span,_U.list([$Html$Attributes.$class("fa fa-refresh")]),_U.list([]))]));
+         default: return A2(clock,address,model);}
+   });
+   return _elm.PechaKucha.Overlay.values = {_op: _op,clockLineStyle: clockLineStyle,opacityStep: opacityStep,view: view,clock: clock};
+};
+Elm.PechaKucha = Elm.PechaKucha || {};
+Elm.PechaKucha.Footer = Elm.PechaKucha.Footer || {};
+Elm.PechaKucha.Footer.make = function (_elm) {
+   "use strict";
+   _elm.PechaKucha = _elm.PechaKucha || {};
+   _elm.PechaKucha.Footer = _elm.PechaKucha.Footer || {};
+   if (_elm.PechaKucha.Footer.values) return _elm.PechaKucha.Footer.values;
+   var _U = Elm.Native.Utils.make(_elm),
+   $Basics = Elm.Basics.make(_elm),
+   $Debug = Elm.Debug.make(_elm),
+   $Html = Elm.Html.make(_elm),
+   $Html$Attributes = Elm.Html.Attributes.make(_elm),
+   $List = Elm.List.make(_elm),
+   $Maybe = Elm.Maybe.make(_elm),
+   $PechaKucha$Config = Elm.PechaKucha.Config.make(_elm),
+   $PechaKucha$Model = Elm.PechaKucha.Model.make(_elm),
+   $Result = Elm.Result.make(_elm),
+   $Signal = Elm.Signal.make(_elm);
+   var _op = {};
+   var view = F2(function (address,model) {
+      var page = $PechaKucha$Model.indexLens.get(model);
+      return A2($Html.div,
+      _U.list([$Html$Attributes.$class("footer")]),
+      _U.list([A2($Html.span,_U.list([]),_U.list([$Html.text("PechaKucha by Artur Opala, 2016 | page ")]))
+              ,A2($Html.span,_U.list([$Html$Attributes.$class("green")]),_U.list([$Html.text($Basics.toString(page + 1))]))
+              ,A2($Html.span,_U.list([]),_U.list([$Html.text(" | left ")]))
+              ,A2($Html.span,
+              _U.list([$Html$Attributes.$class("blue")]),
+              _U.list([$Html.text($Basics.toString(400 - (page * 20 + (model.clock / $PechaKucha$Config.fps | 0))))]))
+              ,A2($Html.span,_U.list([]),_U.list([$Html.text(" sec | Built with Elm !")]))]));
+   });
+   return _elm.PechaKucha.Footer.values = {_op: _op,view: view};
 };
 Elm.PechaKucha = Elm.PechaKucha || {};
 Elm.PechaKucha.make = function (_elm) {
@@ -12230,26 +12580,35 @@ Elm.PechaKucha.make = function (_elm) {
    _elm.PechaKucha = _elm.PechaKucha || {};
    if (_elm.PechaKucha.values) return _elm.PechaKucha.values;
    var _U = Elm.Native.Utils.make(_elm),
-   $Actions = Elm.Actions.make(_elm),
    $Basics = Elm.Basics.make(_elm),
-   $Color = Elm.Color.make(_elm),
    $Debug = Elm.Debug.make(_elm),
    $Effects = Elm.Effects.make(_elm),
-   $Graphics$Collage = Elm.Graphics.Collage.make(_elm),
    $History = Elm.History.make(_elm),
    $Html = Elm.Html.make(_elm),
    $Html$Attributes = Elm.Html.Attributes.make(_elm),
-   $Html$Events = Elm.Html.Events.make(_elm),
    $List = Elm.List.make(_elm),
    $Maybe = Elm.Maybe.make(_elm),
    $Monocle$Lens = Elm.Monocle.Lens.make(_elm),
+   $PechaKucha$Actions = Elm.PechaKucha.Actions.make(_elm),
+   $PechaKucha$Config = Elm.PechaKucha.Config.make(_elm),
+   $PechaKucha$Footer = Elm.PechaKucha.Footer.make(_elm),
+   $PechaKucha$Model = Elm.PechaKucha.Model.make(_elm),
+   $PechaKucha$Overlay = Elm.PechaKucha.Overlay.make(_elm),
    $PechaKucha$Pages = Elm.PechaKucha.Pages.make(_elm),
    $Result = Elm.Result.make(_elm),
    $Signal = Elm.Signal.make(_elm),
    $String = Elm.String.make(_elm),
    $Task = Elm.Task.make(_elm);
    var _op = {};
-   var clockLineStyle = _U.update($Graphics$Collage.defaultLine,{color: $Color.gray,width: 10});
+   var view = F2(function (address,model) {
+      return A2($Html.div,
+      _U.list([$Html$Attributes.$class("page")]),
+      _U.list([A2($Html.div,
+              _U.list([$Html$Attributes.$class(A2($Basics._op["++"],"scene page",$Basics.toString($PechaKucha$Model.indexLens.get(model))))]),
+              _U.list([A2($PechaKucha$Pages.view,address,model.pages)]))
+              ,A2($PechaKucha$Overlay.view,address,model)
+              ,A2($PechaKucha$Footer.view,address,model)]));
+   });
    _op["||>"] = F2(function (_p0,e2) {    var _p1 = _p0;return {ctor: "_Tuple2",_0: _p1._0,_1: $Effects.batch(_U.list([_p1._1,e2]))};});
    var mergeEffects = F2(function (a,b) {    return $Effects.batch(_U.list([a,b]));});
    _op[">>>"] = F2(function (left,right) {
@@ -12266,101 +12625,102 @@ Elm.PechaKucha.make = function (_elm) {
    var none = $Effects.none;
    var setHash = function (n) {
       var set = $History.setPath(A2($Basics._op["++"],"/#",$Basics.toString(n)));
-      var task = A2($Task.andThen,set,function (_p10) {    return $Task.succeed($Actions.Noop);});
+      var task = A2($Task.andThen,set,function (_p10) {    return $Task.succeed($PechaKucha$Actions.Noop);});
       return $Effects.task(task);
    };
    var send = function (action) {    return $Effects.task($Task.succeed(action));};
-   var stateLens = A2($Monocle$Lens.Lens,function (_) {    return _.state;},F2(function (x,m) {    return _U.update(m,{state: x});}));
-   var windowLens = A2($Monocle$Lens.Lens,function (_) {    return _.window;},F2(function (x,m) {    return _U.update(m,{window: x});}));
-   var pagesLens = A2($Monocle$Lens.Lens,function (_) {    return _.pages;},F2(function (x,m) {    return _U.update(m,{pages: x});}));
-   var indexLens = A2($Monocle$Lens.compose,pagesLens,$PechaKucha$Pages.indexLens);
-   var forwardPage = A2($Monocle$Lens.modify,indexLens,function (i) {    return i + 1;});
-   var rollbackPage = A2($Monocle$Lens.modify,indexLens,function (i) {    return i - 1;});
-   var updatePages = function (action) {    return A3($Monocle$Lens.modifyAndMerge,pagesLens,$PechaKucha$Pages.update(action),mergeEffects);};
-   var delayedLens = A2($Monocle$Lens.Lens,function (_) {    return _.delayed;},F2(function (x,m) {    return _U.update(m,{delayed: x});}));
-   var decrementDelay = A2($Monocle$Lens.modify,delayedLens,function (t) {    return _U.cmp(t,0) > 0 ? t - 1 : t;});
-   var receiveTickOtherwise = function (model) {    return {ctor: "_Tuple2",_0: decrementDelay(model),_1: none};};
-   var clockLens = A2($Monocle$Lens.Lens,function (_) {    return _.clock;},F2(function (x,m) {    return _U.update(m,{clock: x});}));
-   var tickClock = A2($Monocle$Lens.modify,clockLens,function (t) {    return t + 1;});
+   var rollbackPage = A2($Monocle$Lens.modify,$PechaKucha$Model.indexLens,function (i) {    return i - 1;});
+   var forwardPage = A2($Monocle$Lens.modify,$PechaKucha$Model.indexLens,function (i) {    return i + 1;});
+   var resetClock = function (_p11) {
+      return A3($Monocle$Lens.modify,
+      $PechaKucha$Model.delayedLens,
+      function (d) {
+         return $PechaKucha$Config.initialDelay;
+      },
+      A3($Monocle$Lens.modify,$PechaKucha$Model.clockLens,function (t) {    return 0;},_p11));
+   };
+   var nextPage = F2(function (max,model) {
+      return _U.cmp($PechaKucha$Model.indexLens.get(model),max) < 0 ? function (_p12) {
+         return resetClock(forwardPage(_p12));
+      }(model) : function (_p13) {
+         return resetClock(A2($PechaKucha$Model.stateLens.set,$PechaKucha$Model.Terminated,_p13));
+      }(model);
+   });
+   var previousPage = F2(function (min,model) {
+      return _U.cmp($PechaKucha$Model.indexLens.get(model),min) > 0 ? function (_p14) {
+         return resetClock(rollbackPage(_p14));
+      }(model) : function (_p15) {
+         return resetClock(A2($PechaKucha$Model.stateLens.set,$PechaKucha$Model.Idle,_p15));
+      }(model);
+   });
+   var decrementDelay = A2($Monocle$Lens.modify,$PechaKucha$Model.delayedLens,function (t) {    return _U.cmp(t,0) > 0 ? t - 1 : t;});
+   var tickClock = A2($Monocle$Lens.modify,$PechaKucha$Model.clockLens,function (t) {    return t + 1;});
    var receiveUrlHash = F2(function (hash,model) {
       var index = $Result.toMaybe($String.toInt(A2($String.dropLeft,1,hash)));
-      var _p11 = index;
-      if (_p11.ctor === "Just") {
-            return {ctor: "_Tuple2",_0: A2(clockLens.set,0,A2(indexLens.set,_p11._0,model)),_1: none};
+      var _p16 = index;
+      if (_p16.ctor === "Just") {
+            return {ctor: "_Tuple2",_0: A2($PechaKucha$Model.clockLens.set,0,A2($PechaKucha$Model.indexLens.set,_p16._0,model)),_1: none};
          } else {
             return {ctor: "_Tuple2",_0: model,_1: none};
          }
    });
-   var Model = F4(function (a,b,c,d) {    return {clock: a,pages: b,state: c,delayed: d};});
-   var Terminated = {ctor: "Terminated"};
-   var Running = {ctor: "Running"};
+   var receivePause = function (model) {
+      return {ctor: "_Tuple2"
+             ,_0: A2($PechaKucha$Model.delayedLens.set,$PechaKucha$Config.initialDelay,A2($PechaKucha$Model.stateLens.set,$PechaKucha$Model.Paused,model))
+             ,_1: none};
+   };
    var receiveRun = function (model) {
-      var effects = _U.eq(model.clock,0) ? send($Actions.Scene(0)) : none;
-      return {ctor: "_Tuple2",_0: A2(stateLens.set,Running,model),_1: effects};
+      var effects = _U.eq(model.clock,0) ? send($PechaKucha$Actions.Scene(0)) : none;
+      return {ctor: "_Tuple2",_0: A2($PechaKucha$Model.stateLens.set,$PechaKucha$Model.Running,model),_1: effects};
    };
-   var updateModel = F2(function (action,model) {
-      var _p12 = action;
-      _v6_4: do {
-         switch (_p12.ctor)
-         {case "Run": return receiveRun(model);
-            case "KeyPressed": switch (_p12._0)
-              {case 32: return receiveRun(model);
-                 case 13: return receiveRun(model);
-                 default: break _v6_4;}
-            case "UrlHash": return A2(receiveUrlHash,_p12._0,model);
-            default: break _v6_4;}
-      } while (false);
-      return {ctor: "_Tuple2",_0: model,_1: none};
-   });
-   var Paused = {ctor: "Paused"};
-   var Idle = {ctor: "Idle"};
-   var pageTimeout = 20;
-   var fps = 1;
-   var pageFrames = pageTimeout * fps;
-   var roundFrames = (pageTimeout / 5 | 0) * fps;
-   var initialDelay = 2 * fps;
-   var init = function () {
-      var _p13 = $PechaKucha$Pages.init;
-      var pages = _p13._0;
-      var effects = _p13._1;
-      return {ctor: "_Tuple2",_0: {clock: 0,pages: pages,state: Idle,delayed: initialDelay},_1: $Effects.batch(_U.list([effects]))};
-   }();
-   var resetClock = function (_p14) {
-      return A3($Monocle$Lens.modify,delayedLens,function (d) {    return initialDelay;},A3($Monocle$Lens.modify,clockLens,function (t) {    return 0;},_p14));
-   };
-   var nextPage = F2(function (max,model) {
-      return _U.cmp(indexLens.get(model),max) < 0 ? function (_p15) {
-         return resetClock(forwardPage(_p15));
-      }(model) : function (_p16) {
-         return resetClock(A2(stateLens.set,Terminated,_p16));
-      }(model);
-   });
-   var receiveNextPage = function (model) {
-      var updated = A2(nextPage,$PechaKucha$Pages.maxPageIndex,model);
-      var effects = $Effects.batch(_U.list([setHash(indexLens.get(updated)),send($Actions.Scene(0))]));
-      return {ctor: "_Tuple2",_0: updated,_1: effects};
-   };
-   var receiveTickWhenRunning = function (_p17) {
-      return function (m) {
-         return _U.cmp(m.clock,pageFrames) > -1 ? receiveNextPage(m) : _U.eq(A2($Basics.rem,m.clock,roundFrames),0) ? {ctor: "_Tuple2"
-                                                                                                                      ,_0: m
-                                                                                                                      ,_1: send($Actions.Scene(m.clock / roundFrames | 0))} : {ctor: "_Tuple2"
-                                                                                                                                                                              ,_0: m
-                                                                                                                                                                              ,_1: none};
-      }(tickClock(_p17));
-   };
-   var previousPage = F2(function (min,model) {
-      return _U.cmp(indexLens.get(model),min) > 0 ? function (_p18) {
-         return resetClock(rollbackPage(_p18));
-      }(model) : function (_p19) {
-         return resetClock(A2(stateLens.set,Idle,_p19));
-      }(model);
-   });
    var receivePreviousPage = function (model) {
       var effects = none;
       var updated = A2(previousPage,$PechaKucha$Pages.minPageIndex,model);
       return {ctor: "_Tuple2",_0: updated,_1: effects};
    };
+   var receiveNextPage = function (model) {
+      var updated = A2(nextPage,$PechaKucha$Pages.maxPageIndex,model);
+      var effects = $Effects.batch(_U.list([setHash($PechaKucha$Model.indexLens.get(updated)),send($PechaKucha$Actions.Scene(0))]));
+      return {ctor: "_Tuple2",_0: updated,_1: effects};
+   };
+   var receiveTickOtherwise = function (model) {    return {ctor: "_Tuple2",_0: decrementDelay(model),_1: none};};
+   var receiveTickWhenRunning = function (_p17) {
+      return function (m) {
+         return _U.cmp(m.clock,$PechaKucha$Config.pageFrames) > -1 ? receiveNextPage(m) : _U.eq(A2($Basics.rem,m.clock,$PechaKucha$Config.roundFrames),
+         0) ? {ctor: "_Tuple2",_0: m,_1: send($PechaKucha$Actions.Scene(m.clock / $PechaKucha$Config.roundFrames | 0))} : {ctor: "_Tuple2",_0: m,_1: none};
+      }(tickClock(_p17));
+   };
+   var updateModel = F2(function (action,model) {
+      var _p18 = action;
+      _v6_4: do {
+         switch (_p18.ctor)
+         {case "Run": return receiveRun(model);
+            case "KeyPressed": switch (_p18._0)
+              {case 32: return receiveRun(model);
+                 case 13: return receiveRun(model);
+                 default: break _v6_4;}
+            case "UrlHash": return A2(receiveUrlHash,_p18._0,model);
+            default: break _v6_4;}
+      } while (false);
+      return {ctor: "_Tuple2",_0: model,_1: none};
+   });
+   var updateWhenRunning = F2(function (action,model) {
+      var _p19 = action;
+      _v7_5: do {
+         switch (_p19.ctor)
+         {case "Tick": return receiveTickWhenRunning(model);
+            case "NextPage": return A2(_op[">>>"],receivePause,receiveNextPage)(model);
+            case "PreviousPage": return A2(_op[">>>"],receivePause,receivePreviousPage)(model);
+            case "Pause": return receivePause(model);
+            case "KeyPressed": if (_p19._0 === 32) {
+                    return receivePause(model);
+                 } else {
+                    break _v7_5;
+                 }
+            default: break _v7_5;}
+      } while (false);
+      return A2(updateModel,action,model);
+   });
    var updateWhenPaused = F2(function (action,model) {
       var _p20 = action;
       switch (_p20.ctor)
@@ -12369,7 +12729,6 @@ Elm.PechaKucha.make = function (_elm) {
          case "PreviousPage": return receivePreviousPage(model);
          default: return A2(updateModel,action,model);}
    });
-   var receivePause = function (model) {    return {ctor: "_Tuple2",_0: A2(delayedLens.set,initialDelay,A2(stateLens.set,Paused,model)),_1: none};};
    var updateWhenIdle = F2(function (action,model) {
       var _p21 = action;
       if (_p21.ctor === "NextPage") {
@@ -12378,23 +12737,15 @@ Elm.PechaKucha.make = function (_elm) {
             return A2(updateModel,action,model);
          }
    });
-   var updateWhenRunning = F2(function (action,model) {
-      var _p22 = action;
-      _v9_5: do {
-         switch (_p22.ctor)
-         {case "Tick": return receiveTickWhenRunning(model);
-            case "NextPage": return A2(_op[">>>"],receivePause,receiveNextPage)(model);
-            case "PreviousPage": return A2(_op[">>>"],receivePause,receivePreviousPage)(model);
-            case "Pause": return receivePause(model);
-            case "KeyPressed": if (_p22._0 === 32) {
-                    return receivePause(model);
-                 } else {
-                    break _v9_5;
-                 }
-            default: break _v9_5;}
-      } while (false);
-      return A2(updateModel,action,model);
-   });
+   var updatePages = function (action) {    return A3($Monocle$Lens.modifyAndMerge,$PechaKucha$Model.pagesLens,$PechaKucha$Pages.update(action),mergeEffects);};
+   var init = function () {
+      var _p22 = $PechaKucha$Pages.init;
+      var pages = _p22._0;
+      var effects = _p22._1;
+      return {ctor: "_Tuple2"
+             ,_0: {clock: 0,pages: pages,state: $PechaKucha$Model.Idle,delayed: $PechaKucha$Config.initialDelay}
+             ,_1: $Effects.batch(_U.list([effects]))};
+   }();
    var updateWhenTerminated = F2(function (action,model) {
       var _p23 = action;
       _v10_4: do {
@@ -12419,74 +12770,22 @@ Elm.PechaKucha.make = function (_elm) {
          case "Running": return A2(updatePages,action,A2(updateWhenRunning,action,model));
          default: return A2(updateWhenTerminated,action,model);}
    });
-   var opacityStep = 0.3 / (5 * fps);
-   var clock = F2(function (address,model) {
-      var angle = $Basics.degrees($Basics.toFloat((-360 / pageTimeout | 0) * (model.clock / fps | 0)));
-      return A2($Html.div,
-      _U.list([$Html$Attributes.$class("clock"),A2($Html$Events.onClick,address,$Actions.Pause)]),
-      _U.list([$Html.fromElement(A3($Graphics$Collage.collage,
-      240,
-      240,
-      _U.list([A2($Graphics$Collage.alpha,
-      0.1,
-      $Graphics$Collage.group(_U.list([A2($Graphics$Collage.outlined,clockLineStyle,$Graphics$Collage.circle(100))
-                                      ,A2($Graphics$Collage.rotate,
-                                      angle,
-                                      A2($Graphics$Collage.traced,
-                                      clockLineStyle,
-                                      $Graphics$Collage.path(_U.list([{ctor: "_Tuple2",_0: 0,_1: 0},{ctor: "_Tuple2",_0: 0,_1: 95}]))))])))])))]));
-   });
-   var overlay = F2(function (address,model) {
-      var _p25 = model.state;
-      switch (_p25.ctor)
-      {case "Idle": return A2($Html.div,
-           _U.list([$Html$Attributes.$class("overlay"),A2($Html$Events.onClick,address,$Actions.Run)]),
-           _U.list([A2($Html.span,_U.list([$Html$Attributes.$class("fa fa-play")]),_U.list([]))]));
-         case "Paused": return A2($Html.div,
-           _U.list([$Html$Attributes.$class("overlay"),A2($Html$Events.onClick,address,$Actions.Run)]),
-           _U.list([A2($Html.span,_U.list([$Html$Attributes.$class("fa fa-pause")]),_U.list([]))]));
-         case "Terminated": return A2($Html.div,
-           _U.list([$Html$Attributes.$class("overlay"),A2($Html$Events.onClick,address,$Actions.Run)]),
-           _U.list([A2($Html.span,_U.list([$Html$Attributes.$class("fa fa-refresh")]),_U.list([]))]));
-         default: return A2(clock,address,model);}
-   });
-   var footer = F2(function (address,model) {
-      var page = indexLens.get(model);
-      return A2($Html.div,
-      _U.list([$Html$Attributes.$class("footer")]),
-      _U.list([A2($Html.span,_U.list([]),_U.list([$Html.text("PechaKucha by Artur Opala, 2016 | page ")]))
-              ,A2($Html.span,_U.list([$Html$Attributes.$class("green")]),_U.list([$Html.text($Basics.toString(page + 1))]))
-              ,A2($Html.span,_U.list([]),_U.list([$Html.text(" | left ")]))
-              ,A2($Html.span,_U.list([$Html$Attributes.$class("blue")]),_U.list([$Html.text($Basics.toString(400 - (page * 20 + (model.clock / fps | 0))))]))
-              ,A2($Html.span,_U.list([]),_U.list([$Html.text(" sec | Built with Elm !")]))]));
-   });
-   var view = F2(function (address,model) {
-      return A2($Html.div,
-      _U.list([$Html$Attributes.$class("page")]),
-      _U.list([A2($Html.div,
-              _U.list([$Html$Attributes.$class(A2($Basics._op["++"],"scene page",$Basics.toString(indexLens.get(model))))]),
-              _U.list([A2($PechaKucha$Pages.view,address,model.pages)]))
-              ,A2(overlay,address,model)
-              ,A2(footer,address,model)]));
-   });
    return _elm.PechaKucha.values = {_op: _op
-                                   ,fps: fps
-                                   ,pageTimeout: pageTimeout
-                                   ,pageFrames: pageFrames
-                                   ,roundFrames: roundFrames
-                                   ,initialDelay: initialDelay
-                                   ,Idle: Idle
-                                   ,Paused: Paused
-                                   ,Running: Running
-                                   ,Terminated: Terminated
-                                   ,Model: Model
                                    ,init: init
-                                   ,clockLens: clockLens
-                                   ,delayedLens: delayedLens
-                                   ,pagesLens: pagesLens
-                                   ,indexLens: indexLens
-                                   ,windowLens: windowLens
-                                   ,stateLens: stateLens
+                                   ,update: update
+                                   ,updatePages: updatePages
+                                   ,updateWhenIdle: updateWhenIdle
+                                   ,updateWhenPaused: updateWhenPaused
+                                   ,updateWhenRunning: updateWhenRunning
+                                   ,updateWhenTerminated: updateWhenTerminated
+                                   ,updateModel: updateModel
+                                   ,receiveTickWhenRunning: receiveTickWhenRunning
+                                   ,receiveTickOtherwise: receiveTickOtherwise
+                                   ,receiveNextPage: receiveNextPage
+                                   ,receivePreviousPage: receivePreviousPage
+                                   ,receiveRun: receiveRun
+                                   ,receivePause: receivePause
+                                   ,receiveUrlHash: receiveUrlHash
                                    ,tickClock: tickClock
                                    ,decrementDelay: decrementDelay
                                    ,resetClock: resetClock
@@ -12497,217 +12796,8 @@ Elm.PechaKucha.make = function (_elm) {
                                    ,send: send
                                    ,setHash: setHash
                                    ,none: none
-                                   ,receiveTickWhenRunning: receiveTickWhenRunning
-                                   ,receiveTickOtherwise: receiveTickOtherwise
-                                   ,receiveNextPage: receiveNextPage
-                                   ,receivePreviousPage: receivePreviousPage
-                                   ,receiveRun: receiveRun
-                                   ,receivePause: receivePause
-                                   ,receiveUrlHash: receiveUrlHash
                                    ,mergeEffects: mergeEffects
-                                   ,updatePages: updatePages
-                                   ,update: update
-                                   ,updateWhenIdle: updateWhenIdle
-                                   ,updateWhenPaused: updateWhenPaused
-                                   ,updateWhenRunning: updateWhenRunning
-                                   ,updateWhenTerminated: updateWhenTerminated
-                                   ,updateModel: updateModel
-                                   ,view: view
-                                   ,clockLineStyle: clockLineStyle
-                                   ,opacityStep: opacityStep
-                                   ,overlay: overlay
-                                   ,clock: clock
-                                   ,footer: footer};
-};
-Elm.Native.Keyboard = {};
-
-Elm.Native.Keyboard.make = function(localRuntime) {
-	localRuntime.Native = localRuntime.Native || {};
-	localRuntime.Native.Keyboard = localRuntime.Native.Keyboard || {};
-	if (localRuntime.Native.Keyboard.values)
-	{
-		return localRuntime.Native.Keyboard.values;
-	}
-
-	var NS = Elm.Native.Signal.make(localRuntime);
-
-
-	function keyEvent(event)
-	{
-		return {
-			alt: event.altKey,
-			meta: event.metaKey,
-			keyCode: event.keyCode
-		};
-	}
-
-
-	function keyStream(node, eventName, handler)
-	{
-		var stream = NS.input(eventName, { alt: false, meta: false, keyCode: 0 });
-
-		localRuntime.addListener([stream.id], node, eventName, function(e) {
-			localRuntime.notify(stream.id, handler(e));
-		});
-
-		return stream;
-	}
-
-	var downs = keyStream(document, 'keydown', keyEvent);
-	var ups = keyStream(document, 'keyup', keyEvent);
-	var presses = keyStream(document, 'keypress', keyEvent);
-	var blurs = keyStream(window, 'blur', function() { return null; });
-
-
-	return localRuntime.Native.Keyboard.values = {
-		downs: downs,
-		ups: ups,
-		blurs: blurs,
-		presses: presses
-	};
-};
-
-Elm.Keyboard = Elm.Keyboard || {};
-Elm.Keyboard.make = function (_elm) {
-   "use strict";
-   _elm.Keyboard = _elm.Keyboard || {};
-   if (_elm.Keyboard.values) return _elm.Keyboard.values;
-   var _U = Elm.Native.Utils.make(_elm),
-   $Basics = Elm.Basics.make(_elm),
-   $Char = Elm.Char.make(_elm),
-   $Native$Keyboard = Elm.Native.Keyboard.make(_elm),
-   $Set = Elm.Set.make(_elm),
-   $Signal = Elm.Signal.make(_elm);
-   var _op = {};
-   var presses = A2($Signal.map,function (_) {    return _.keyCode;},$Native$Keyboard.presses);
-   var toXY = F2(function (_p0,keyCodes) {
-      var _p1 = _p0;
-      var is = function (keyCode) {    return A2($Set.member,keyCode,keyCodes) ? 1 : 0;};
-      return {x: is(_p1.right) - is(_p1.left),y: is(_p1.up) - is(_p1.down)};
-   });
-   var Directions = F4(function (a,b,c,d) {    return {up: a,down: b,left: c,right: d};});
-   var dropMap = F2(function (f,signal) {    return $Signal.dropRepeats(A2($Signal.map,f,signal));});
-   var EventInfo = F3(function (a,b,c) {    return {alt: a,meta: b,keyCode: c};});
-   var Blur = {ctor: "Blur"};
-   var Down = function (a) {    return {ctor: "Down",_0: a};};
-   var Up = function (a) {    return {ctor: "Up",_0: a};};
-   var rawEvents = $Signal.mergeMany(_U.list([A2($Signal.map,Up,$Native$Keyboard.ups)
-                                             ,A2($Signal.map,Down,$Native$Keyboard.downs)
-                                             ,A2($Signal.map,$Basics.always(Blur),$Native$Keyboard.blurs)]));
-   var empty = {alt: false,meta: false,keyCodes: $Set.empty};
-   var update = F2(function (event,model) {
-      var _p2 = event;
-      switch (_p2.ctor)
-      {case "Down": var _p3 = _p2._0;
-           return {alt: _p3.alt,meta: _p3.meta,keyCodes: A2($Set.insert,_p3.keyCode,model.keyCodes)};
-         case "Up": var _p4 = _p2._0;
-           return {alt: _p4.alt,meta: _p4.meta,keyCodes: A2($Set.remove,_p4.keyCode,model.keyCodes)};
-         default: return empty;}
-   });
-   var model = A3($Signal.foldp,update,empty,rawEvents);
-   var alt = A2(dropMap,function (_) {    return _.alt;},model);
-   var meta = A2(dropMap,function (_) {    return _.meta;},model);
-   var keysDown = A2(dropMap,function (_) {    return _.keyCodes;},model);
-   var arrows = A2(dropMap,toXY({up: 38,down: 40,left: 37,right: 39}),keysDown);
-   var wasd = A2(dropMap,toXY({up: 87,down: 83,left: 65,right: 68}),keysDown);
-   var isDown = function (keyCode) {    return A2(dropMap,$Set.member(keyCode),keysDown);};
-   var ctrl = isDown(17);
-   var shift = isDown(16);
-   var space = isDown(32);
-   var enter = isDown(13);
-   var Model = F3(function (a,b,c) {    return {alt: a,meta: b,keyCodes: c};});
-   return _elm.Keyboard.values = {_op: _op
-                                 ,arrows: arrows
-                                 ,wasd: wasd
-                                 ,enter: enter
-                                 ,space: space
-                                 ,ctrl: ctrl
-                                 ,shift: shift
-                                 ,alt: alt
-                                 ,meta: meta
-                                 ,isDown: isDown
-                                 ,keysDown: keysDown
-                                 ,presses: presses};
-};
-Elm.Native = Elm.Native || {};
-Elm.Native.Window = {};
-Elm.Native.Window.make = function make(localRuntime) {
-	localRuntime.Native = localRuntime.Native || {};
-	localRuntime.Native.Window = localRuntime.Native.Window || {};
-	if (localRuntime.Native.Window.values)
-	{
-		return localRuntime.Native.Window.values;
-	}
-
-	var NS = Elm.Native.Signal.make(localRuntime);
-	var Tuple2 = Elm.Native.Utils.make(localRuntime).Tuple2;
-
-
-	function getWidth()
-	{
-		return localRuntime.node.clientWidth;
-	}
-
-
-	function getHeight()
-	{
-		if (localRuntime.isFullscreen())
-		{
-			return window.innerHeight;
-		}
-		return localRuntime.node.clientHeight;
-	}
-
-
-	var dimensions = NS.input('Window.dimensions', Tuple2(getWidth(), getHeight()));
-
-
-	function resizeIfNeeded()
-	{
-		// Do not trigger event if the dimensions have not changed.
-		// This should be most of the time.
-		var w = getWidth();
-		var h = getHeight();
-		if (dimensions.value._0 === w && dimensions.value._1 === h)
-		{
-			return;
-		}
-
-		setTimeout(function() {
-			// Check again to see if the dimensions have changed.
-			// It is conceivable that the dimensions have changed
-			// again while some other event was being processed.
-			w = getWidth();
-			h = getHeight();
-			if (dimensions.value._0 === w && dimensions.value._1 === h)
-			{
-				return;
-			}
-			localRuntime.notify(dimensions.id, Tuple2(w, h));
-		}, 0);
-	}
-
-
-	localRuntime.addListener([dimensions.id], window, 'resize', resizeIfNeeded);
-
-
-	return localRuntime.Native.Window.values = {
-		dimensions: dimensions,
-		resizeIfNeeded: resizeIfNeeded
-	};
-};
-
-Elm.Window = Elm.Window || {};
-Elm.Window.make = function (_elm) {
-   "use strict";
-   _elm.Window = _elm.Window || {};
-   if (_elm.Window.values) return _elm.Window.values;
-   var _U = Elm.Native.Utils.make(_elm),$Basics = Elm.Basics.make(_elm),$Native$Window = Elm.Native.Window.make(_elm),$Signal = Elm.Signal.make(_elm);
-   var _op = {};
-   var dimensions = $Native$Window.dimensions;
-   var width = A2($Signal.map,$Basics.fst,dimensions);
-   var height = A2($Signal.map,$Basics.snd,dimensions);
-   return _elm.Window.values = {_op: _op,dimensions: dimensions,width: width,height: height};
+                                   ,view: view};
 };
 Elm.Main = Elm.Main || {};
 Elm.Main.make = function (_elm) {
@@ -12715,7 +12805,6 @@ Elm.Main.make = function (_elm) {
    _elm.Main = _elm.Main || {};
    if (_elm.Main.values) return _elm.Main.values;
    var _U = Elm.Native.Utils.make(_elm),
-   $Actions = Elm.Actions.make(_elm),
    $Basics = Elm.Basics.make(_elm),
    $Debug = Elm.Debug.make(_elm),
    $Effects = Elm.Effects.make(_elm),
@@ -12724,6 +12813,8 @@ Elm.Main.make = function (_elm) {
    $List = Elm.List.make(_elm),
    $Maybe = Elm.Maybe.make(_elm),
    $PechaKucha = Elm.PechaKucha.make(_elm),
+   $PechaKucha$Actions = Elm.PechaKucha.Actions.make(_elm),
+   $PechaKucha$Config = Elm.PechaKucha.Config.make(_elm),
    $Result = Elm.Result.make(_elm),
    $Signal = Elm.Signal.make(_elm),
    $StartApp = Elm.StartApp.make(_elm),
@@ -12733,10 +12824,10 @@ Elm.Main.make = function (_elm) {
    var app = $StartApp.start({init: $PechaKucha.init
                              ,update: $PechaKucha.update
                              ,view: $PechaKucha.view
-                             ,inputs: _U.list([A2($Signal.map,function (_p0) {    return $Actions.Tick;},$Time.fps($PechaKucha.fps))
-                                              ,A2($Signal.map,$Actions.keypressAsAction,$Keyboard.presses)
-                                              ,A2($Signal.map,$Actions.arrowAsAction,$Keyboard.arrows)
-                                              ,A2($Signal.map,$Actions.hashAsAction,$History.hash)])});
+                             ,inputs: _U.list([A2($Signal.map,function (_p0) {    return $PechaKucha$Actions.Tick;},$Time.fps($PechaKucha$Config.fps))
+                                              ,A2($Signal.map,$PechaKucha$Actions.keypressAsAction,$Keyboard.presses)
+                                              ,A2($Signal.map,$PechaKucha$Actions.arrowAsAction,$Keyboard.arrows)
+                                              ,A2($Signal.map,$PechaKucha$Actions.hashAsAction,$History.hash)])});
    var main = app.html;
    var tasks = Elm.Native.Task.make(_elm).performSignal("tasks",app.tasks);
    return _elm.Main.values = {_op: _op,app: app,main: main};

@@ -3,7 +3,7 @@ module PechaKucha.Page15 (Model, init, update, view) where
 import Html exposing (..)
 import Html.Attributes exposing (class, classList, style, key)
 import PechaKucha.PageType1
-import Actions exposing (..)
+import PechaKucha.Actions exposing (..)
 
 
 -- SCENES

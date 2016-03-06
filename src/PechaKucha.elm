@@ -9,54 +9,19 @@ import Char
 import Debug
 import Task
 import Array exposing (Array)
-import Actions exposing (..)
+import PechaKucha.Actions exposing (..)
 import Monocle.Lens exposing (Lens, compose)
-import Graphics.Collage exposing (collage, group, outlined, toForm, rotate, square, filled, traced, path, LineStyle, alpha, solid, circle, defaultLine)
-import Graphics.Element exposing (..)
-import PechaKucha.Pages
-import Text
-import Color
 import Result
 import Maybe
 import History
+import PechaKucha.Config exposing (..)
+import PechaKucha.Model exposing (..)
+import PechaKucha.Pages
+import PechaKucha.Overlay
+import PechaKucha.Footer
 
 
--- MODEL
-
-
-fps =
-    1
-
-
-pageTimeout =
-    20
-
-
-pageFrames =
-    pageTimeout * fps
-
-
-roundFrames =
-    (pageTimeout // 5) * fps
-
-
-initialDelay =
-    2 * fps
-
-
-type PresentationState
-    = Idle
-    | Paused
-    | Running
-    | Terminated
-
-
-type alias Model =
-    { clock : Int
-    , pages : PechaKucha.Pages.Model
-    , state : PresentationState
-    , delayed : Int
-    }
+-- INIT
 
 
 init : ( Model, Effects Action )
@@ -73,203 +38,8 @@ init =
         )
 
 
-clockLens =
-    Lens .clock (\x m -> { m | clock = x })
-
-
-delayedLens =
-    Lens .delayed (\x m -> { m | delayed = x })
-
-
-pagesLens =
-    Lens .pages (\x m -> { m | pages = x })
-
-
-indexLens =
-    pagesLens `compose` PechaKucha.Pages.indexLens
-
-
-windowLens =
-    Lens .window (\x m -> { m | window = x })
-
-
-stateLens =
-    Lens .state (\x m -> { m | state = x })
-
-
-tickClock : Model -> Model
-tickClock =
-    Monocle.Lens.modify clockLens (\t -> t + 1)
-
-
-decrementDelay : Model -> Model
-decrementDelay =
-    Monocle.Lens.modify
-        delayedLens
-        (\t ->
-            if t > 0 then
-                t - 1
-            else
-                t
-        )
-
-
-resetClock : Model -> Model
-resetClock =
-    Monocle.Lens.modify clockLens (\t -> 0)
-        >> Monocle.Lens.modify delayedLens (\d -> initialDelay)
-
-
-forwardPage =
-    Monocle.Lens.modify
-        indexLens
-        (\i -> i + 1)
-
-
-rollbackPage =
-    Monocle.Lens.modify
-        indexLens
-        (\i -> i - 1)
-
-
-nextPage : Int -> Model -> Model
-nextPage max model =
-    if (indexLens.get model) < max then
-        model |> forwardPage >> resetClock
-    else
-        model |> stateLens.set Terminated >> resetClock
-
-
-previousPage : Int -> Model -> Model
-previousPage min model =
-    if (indexLens.get model) > min then
-        model |> rollbackPage >> resetClock
-    else
-        model |> stateLens.set Idle >> resetClock
-
-
 
 -- UPDATE
-
-
-send : Action -> Effects Action
-send action =
-    Task.succeed action
-        |> Effects.task
-
-
-setHash n =
-    let
-        set = History.setPath ("/#" ++ (toString n))
-
-        task = Task.andThen set (\_ -> Task.succeed Noop)
-    in
-        Effects.task task
-
-
-none =
-    Effects.none
-
-
-receiveTickWhenRunning =
-    tickClock
-        >> (\m ->
-                if m.clock >= pageFrames then
-                    receiveNextPage m
-                else if m.clock `rem` roundFrames == 0 then
-                    ( m, send (Scene (m.clock // roundFrames)) )
-                else
-                    ( m, none )
-           )
-
-
-receiveTickOtherwise model =
-    ( model |> decrementDelay, none )
-
-
-receiveNextPage model =
-    let
-        updated = nextPage PechaKucha.Pages.maxPageIndex model
-
-        effects = Effects.batch [ setHash (indexLens.get updated), send (Scene 0) ]
-    in
-        ( updated, effects )
-
-
-receivePreviousPage model =
-    let
-        updated = previousPage PechaKucha.Pages.minPageIndex model
-
-        effects = none
-    in
-        ( updated, effects )
-
-
-receiveRun model =
-    let
-        effects =
-            if model.clock == 0 then
-                send (Scene 0)
-            else
-                none
-    in
-        ( stateLens.set Running model, effects )
-
-
-receivePause model =
-    ( stateLens.set Paused model |> delayedLens.set initialDelay, none )
-
-
-receiveUrlHash hash model =
-    let
-        index =
-            hash
-                |> String.dropLeft 1
-                |> String.toInt
-                |> Result.toMaybe
-    in
-        case index of
-            Just n ->
-                ( model |> indexLens.set n |> clockLens.set 0, none )
-
-            Nothing ->
-                ( model, none )
-
-
-mergeEffects a b =
-    Effects.batch [ a, b ]
-
-
-(>>>) : (Model -> ( Model, Effects Action )) -> (Model -> ( Model, Effects Action )) -> Model -> ( Model, Effects Action )
-(>>>) left right =
-    let
-        merge e1 ( m2, e2 ) = ( m2, mergeEffects e1 e2 )
-
-        r ( m1, e1 ) = right m1 |> merge e1
-
-        l model = left model |> r
-    in
-        l
-
-
-(|>>) : ( Model, Effects Action ) -> (Model -> ( Model, Effects Action )) -> ( Model, Effects Action )
-(|>>) init right =
-    let
-        merge e1 ( m2, e2 ) = ( m2, mergeEffects e1 e2 )
-
-        r ( m1, e1 ) = right m1 |> merge e1
-    in
-        r init
-
-
-(||>) : ( Model, Effects Action ) -> Effects Action -> ( Model, Effects Action )
-(||>) ( model, e1 ) e2 =
-    ( model, Effects.batch [ e1, e2 ] )
-
-
-updatePages : Action -> ( Model, Effects Action ) -> ( Model, Effects Action )
-updatePages action =
-    Monocle.Lens.modifyAndMerge pagesLens (PechaKucha.Pages.update action) mergeEffects
 
 
 update : Action -> Model -> ( Model, Effects Action )
@@ -286,6 +56,11 @@ update action model =
 
         Terminated ->
             updateWhenTerminated action model
+
+
+updatePages : Action -> ( Model, Effects Action ) -> ( Model, Effects Action )
+updatePages action =
+    Monocle.Lens.modifyAndMerge pagesLens (PechaKucha.Pages.update action) mergeEffects
 
 
 updateWhenIdle : Action -> Model -> ( Model, Effects Action )
@@ -374,6 +149,172 @@ updateModel action model =
             ( model, none )
 
 
+receiveTickWhenRunning =
+    tickClock
+        >> (\m ->
+                if m.clock >= pageFrames then
+                    receiveNextPage m
+                else if m.clock `rem` roundFrames == 0 then
+                    ( m, send (Scene (m.clock // roundFrames)) )
+                else
+                    ( m, none )
+           )
+
+
+receiveTickOtherwise model =
+    ( model |> decrementDelay, none )
+
+
+receiveNextPage model =
+    let
+        updated = nextPage PechaKucha.Pages.maxPageIndex model
+
+        effects = Effects.batch [ setHash (indexLens.get updated), send (Scene 0) ]
+    in
+        ( updated, effects )
+
+
+receivePreviousPage model =
+    let
+        updated = previousPage PechaKucha.Pages.minPageIndex model
+
+        effects = none
+    in
+        ( updated, effects )
+
+
+receiveRun model =
+    let
+        effects =
+            if model.clock == 0 then
+                send (Scene 0)
+            else
+                none
+    in
+        ( stateLens.set Running model, effects )
+
+
+receivePause model =
+    ( stateLens.set Paused model |> delayedLens.set initialDelay, none )
+
+
+receiveUrlHash hash model =
+    let
+        index =
+            hash
+                |> String.dropLeft 1
+                |> String.toInt
+                |> Result.toMaybe
+    in
+        case index of
+            Just n ->
+                ( model |> indexLens.set n |> clockLens.set 0, none )
+
+            Nothing ->
+                ( model, none )
+
+
+tickClock : Model -> Model
+tickClock =
+    Monocle.Lens.modify clockLens (\t -> t + 1)
+
+
+decrementDelay : Model -> Model
+decrementDelay =
+    Monocle.Lens.modify
+        delayedLens
+        (\t ->
+            if t > 0 then
+                t - 1
+            else
+                t
+        )
+
+
+resetClock : Model -> Model
+resetClock =
+    Monocle.Lens.modify clockLens (\t -> 0)
+        >> Monocle.Lens.modify delayedLens (\d -> initialDelay)
+
+
+forwardPage =
+    Monocle.Lens.modify
+        indexLens
+        (\i -> i + 1)
+
+
+rollbackPage =
+    Monocle.Lens.modify
+        indexLens
+        (\i -> i - 1)
+
+
+nextPage : Int -> Model -> Model
+nextPage max model =
+    if (indexLens.get model) < max then
+        model |> forwardPage >> resetClock
+    else
+        model |> stateLens.set Terminated >> resetClock
+
+
+previousPage : Int -> Model -> Model
+previousPage min model =
+    if (indexLens.get model) > min then
+        model |> rollbackPage >> resetClock
+    else
+        model |> stateLens.set Idle >> resetClock
+
+
+send : Action -> Effects Action
+send action =
+    Task.succeed action
+        |> Effects.task
+
+
+setHash n =
+    let
+        set = History.setPath ("/#" ++ (toString n))
+
+        task = Task.andThen set (\_ -> Task.succeed Noop)
+    in
+        Effects.task task
+
+
+none =
+    Effects.none
+
+
+mergeEffects a b =
+    Effects.batch [ a, b ]
+
+
+(>>>) : (Model -> ( Model, Effects Action )) -> (Model -> ( Model, Effects Action )) -> Model -> ( Model, Effects Action )
+(>>>) left right =
+    let
+        merge e1 ( m2, e2 ) = ( m2, mergeEffects e1 e2 )
+
+        r ( m1, e1 ) = right m1 |> merge e1
+
+        l model = left model |> r
+    in
+        l
+
+
+(|>>) : ( Model, Effects Action ) -> (Model -> ( Model, Effects Action )) -> ( Model, Effects Action )
+(|>>) init right =
+    let
+        merge e1 ( m2, e2 ) = ( m2, mergeEffects e1 e2 )
+
+        r ( m1, e1 ) = right m1 |> merge e1
+    in
+        r init
+
+
+(||>) : ( Model, Effects Action ) -> Effects Action -> ( Model, Effects Action )
+(||>) ( model, e1 ) e2 =
+    ( model, Effects.batch [ e1, e2 ] )
+
+
 
 -- VIEW
 
@@ -385,86 +326,6 @@ view address model =
         [ div
             [ class ("scene page" ++ (toString (indexLens.get model))) ]
             [ PechaKucha.Pages.view address model.pages ]
-        , overlay address model
-        , footer address model
+        , PechaKucha.Overlay.view address model
+        , PechaKucha.Footer.view address model
         ]
-
-
-clockLineStyle =
-    { defaultLine | color = Color.gray, width = 10 }
-
-
-opacityStep =
-    0.3 / (5 * fps)
-
-
-overlay : Signal.Address Action -> Model -> Html
-overlay address model =
-    case model.state of
-        Idle ->
-            div
-                [ class "overlay"
-                , onClick address Run
-                ]
-                [ span [ class "fa fa-play" ] []
-                ]
-
-        Paused ->
-            div
-                [ class "overlay"
-                , onClick address Run
-                ]
-                [ span [ class "fa fa-pause" ] []
-                ]
-
-        Terminated ->
-            div
-                [ class "overlay"
-                , onClick address Run
-                ]
-                [ span [ class "fa fa-refresh" ] []
-                ]
-
-        Running ->
-            clock address model
-
-
-clock : Signal.Address Action -> Model -> Html
-clock address model =
-    let
-        angle = degrees (toFloat ((-360 // pageTimeout) * ((model.clock // fps))))
-    in
-        div
-            [ class "clock"
-            , onClick address Pause
-            ]
-            [ fromElement
-                (collage
-                    240
-                    240
-                    [ alpha
-                        0.1
-                        (group
-                            [ outlined clockLineStyle (circle 100)
-                            , rotate
-                                angle
-                                (traced clockLineStyle (path [ ( 0, 0 ), ( 0, 95 ) ]))
-                            ]
-                        )
-                    ]
-                )
-            ]
-
-
-footer address model =
-    let
-        page = indexLens.get model
-    in
-        div
-            [ class "footer" ]
-            [ span [] [ text "PechaKucha by Artur Opala, 2016 | page " ]
-            , span [ class "green" ] [ text (page + 1 |> toString) ]
-            , span [] [ text " | left " ]
-            , span [ class "blue" ] [ text (toString (400 - (page * 20 + (model.clock // fps)))) ]
-            , span [] [ text " sec | Built with Elm !" ]
-            ]

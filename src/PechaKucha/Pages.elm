@@ -9,7 +9,7 @@ import Char
 import Debug
 import Task
 import Array exposing (Array)
-import Actions exposing (..)
+import PechaKucha.Actions exposing (..)
 import Monocle.Lens exposing (Lens, zip, compose, modify, modifyAndMerge)
 import PechaKucha.Page01
 import PechaKucha.Page02

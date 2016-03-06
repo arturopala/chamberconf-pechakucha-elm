@@ -1,6 +1,6 @@
 module PechaKucha.PageType1 (..) where
 
-import Actions exposing (..)
+import PechaKucha.Actions exposing (..)
 import Effects exposing (Effects, map, batch, Never)
 
 
