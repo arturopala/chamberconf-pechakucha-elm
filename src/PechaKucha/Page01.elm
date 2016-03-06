@@ -34,14 +34,14 @@ scene3 : Html
 scene3 =
     div
         [ class "scene3 pink animated fadeIn", key "s0.3" ]
-        [ text "for frontend" ]
+        [ text "transpiles to JS" ]
 
 
 scene4 : Html
 scene4 =
     div
         [ class "scene4 blue animated fadeIn", key "s0.4" ]
-        [ text "lang and arch" ]
+        [ text "full lang and arch" ]
 
 
 
