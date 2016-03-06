@@ -20,7 +20,7 @@ scene1 : Html
 scene1 =
     div
         [ class "scene1 orange animated fadeIn", key "s0.1" ]
-        [ text "same input -> same output" ]
+        [ text "same input -> output" ]
 
 
 scene2 : Html
