@@ -11182,6 +11182,48 @@ Elm.Monocle.Lens.make = function (_elm) {
    return _elm.Monocle.Lens.values = {_op: _op,fromIso: fromIso,compose: compose,modify: modify,zip: zip,modifyAndMerge: modifyAndMerge,Lens: Lens};
 };
 Elm.PechaKucha = Elm.PechaKucha || {};
+Elm.PechaKucha.Clock = Elm.PechaKucha.Clock || {};
+Elm.PechaKucha.Clock.make = function (_elm) {
+   "use strict";
+   _elm.PechaKucha = _elm.PechaKucha || {};
+   _elm.PechaKucha.Clock = _elm.PechaKucha.Clock || {};
+   if (_elm.PechaKucha.Clock.values) return _elm.PechaKucha.Clock.values;
+   var _U = Elm.Native.Utils.make(_elm),
+   $Basics = Elm.Basics.make(_elm),
+   $Debug = Elm.Debug.make(_elm),
+   $Graphics$Collage = Elm.Graphics.Collage.make(_elm),
+   $Html = Elm.Html.make(_elm),
+   $Html$Attributes = Elm.Html.Attributes.make(_elm),
+   $Html$Events = Elm.Html.Events.make(_elm),
+   $List = Elm.List.make(_elm),
+   $Maybe = Elm.Maybe.make(_elm),
+   $Result = Elm.Result.make(_elm),
+   $Signal = Elm.Signal.make(_elm);
+   var _op = {};
+   var Config = F4(function (a,b,c,d) {    return {size: a,border: b,lineStyle: c,opacity: d};});
+   var Pause = {ctor: "Pause"};
+   var clock = F3(function (address,config,angle) {
+      var height = config.size + config.border * 2;
+      var width = config.size + config.border * 2;
+      var radius = $Basics.toFloat(config.size) / 2;
+      return A2($Html.div,
+      _U.list([$Html$Attributes.$class("clock"),A2($Html$Events.onClick,address,Pause)]),
+      _U.list([$Html.fromElement(A3($Graphics$Collage.collage,
+      width,
+      height,
+      _U.list([A2($Graphics$Collage.alpha,
+      config.opacity,
+      $Graphics$Collage.group(_U.list([A2($Graphics$Collage.outlined,config.lineStyle,$Graphics$Collage.circle(radius))
+                                      ,A2($Graphics$Collage.rotate,
+                                      angle,
+                                      A2($Graphics$Collage.traced,
+                                      config.lineStyle,
+                                      $Graphics$Collage.path(_U.list([{ctor: "_Tuple2",_0: 0,_1: 0}
+                                                                     ,{ctor: "_Tuple2",_0: 0,_1: radius - config.lineStyle.width}]))))])))])))]));
+   });
+   return _elm.PechaKucha.Clock.values = {_op: _op,Pause: Pause,Config: Config,clock: clock};
+};
+Elm.PechaKucha = Elm.PechaKucha || {};
 Elm.PechaKucha.Config = Elm.PechaKucha.Config || {};
 Elm.PechaKucha.Config.make = function (_elm) {
    "use strict";
@@ -11190,12 +11232,16 @@ Elm.PechaKucha.Config.make = function (_elm) {
    if (_elm.PechaKucha.Config.values) return _elm.PechaKucha.Config.values;
    var _U = Elm.Native.Utils.make(_elm),
    $Basics = Elm.Basics.make(_elm),
+   $Color = Elm.Color.make(_elm),
    $Debug = Elm.Debug.make(_elm),
+   $Graphics$Collage = Elm.Graphics.Collage.make(_elm),
    $List = Elm.List.make(_elm),
    $Maybe = Elm.Maybe.make(_elm),
+   $PechaKucha$Clock = Elm.PechaKucha.Clock.make(_elm),
    $Result = Elm.Result.make(_elm),
    $Signal = Elm.Signal.make(_elm);
    var _op = {};
+   var clockConfig = {size: 180,border: 20,lineStyle: _U.update($Graphics$Collage.defaultLine,{color: $Color.gray,width: 10}),opacity: 0.1};
    var pageTimeout = 20;
    var fps = 1;
    var pageFrames = pageTimeout * fps;
@@ -11206,7 +11252,8 @@ Elm.PechaKucha.Config.make = function (_elm) {
                                           ,pageTimeout: pageTimeout
                                           ,pageFrames: pageFrames
                                           ,roundFrames: roundFrames
-                                          ,initialDelay: initialDelay};
+                                          ,initialDelay: initialDelay
+                                          ,clockConfig: clockConfig};
 };
 Elm.PechaKucha = Elm.PechaKucha || {};
 Elm.PechaKucha.PageType1 = Elm.PechaKucha.PageType1 || {};
@@ -12488,38 +12535,19 @@ Elm.PechaKucha.Overlay.make = function (_elm) {
    if (_elm.PechaKucha.Overlay.values) return _elm.PechaKucha.Overlay.values;
    var _U = Elm.Native.Utils.make(_elm),
    $Basics = Elm.Basics.make(_elm),
-   $Color = Elm.Color.make(_elm),
    $Debug = Elm.Debug.make(_elm),
-   $Graphics$Collage = Elm.Graphics.Collage.make(_elm),
    $Html = Elm.Html.make(_elm),
    $Html$Attributes = Elm.Html.Attributes.make(_elm),
    $Html$Events = Elm.Html.Events.make(_elm),
    $List = Elm.List.make(_elm),
    $Maybe = Elm.Maybe.make(_elm),
    $PechaKucha$Actions = Elm.PechaKucha.Actions.make(_elm),
+   $PechaKucha$Clock = Elm.PechaKucha.Clock.make(_elm),
    $PechaKucha$Config = Elm.PechaKucha.Config.make(_elm),
    $PechaKucha$Model = Elm.PechaKucha.Model.make(_elm),
    $Result = Elm.Result.make(_elm),
    $Signal = Elm.Signal.make(_elm);
    var _op = {};
-   var opacityStep = 0.3 / (5 * $PechaKucha$Config.fps);
-   var clockLineStyle = _U.update($Graphics$Collage.defaultLine,{color: $Color.gray,width: 10});
-   var clock = F2(function (address,model) {
-      var angle = $Basics.degrees($Basics.toFloat((-360 / $PechaKucha$Config.pageTimeout | 0) * (model.clock / $PechaKucha$Config.fps | 0)));
-      return A2($Html.div,
-      _U.list([$Html$Attributes.$class("clock"),A2($Html$Events.onClick,address,$PechaKucha$Actions.Pause)]),
-      _U.list([$Html.fromElement(A3($Graphics$Collage.collage,
-      240,
-      240,
-      _U.list([A2($Graphics$Collage.alpha,
-      0.1,
-      $Graphics$Collage.group(_U.list([A2($Graphics$Collage.outlined,clockLineStyle,$Graphics$Collage.circle(100))
-                                      ,A2($Graphics$Collage.rotate,
-                                      angle,
-                                      A2($Graphics$Collage.traced,
-                                      clockLineStyle,
-                                      $Graphics$Collage.path(_U.list([{ctor: "_Tuple2",_0: 0,_1: 0},{ctor: "_Tuple2",_0: 0,_1: 95}]))))])))])))]));
-   });
    var view = F2(function (address,model) {
       var _p0 = model.state;
       switch (_p0.ctor)
@@ -12532,9 +12560,13 @@ Elm.PechaKucha.Overlay.make = function (_elm) {
          case "Terminated": return A2($Html.div,
            _U.list([$Html$Attributes.$class("overlay"),A2($Html$Events.onClick,address,$PechaKucha$Actions.Run)]),
            _U.list([A2($Html.span,_U.list([$Html$Attributes.$class("fa fa-refresh")]),_U.list([]))]));
-         default: return A2(clock,address,model);}
+         default: var angle = $Basics.degrees($Basics.toFloat((-360 / $PechaKucha$Config.pageTimeout | 0) * (model.clock / $PechaKucha$Config.fps | 0)));
+           return A3($PechaKucha$Clock.clock,
+           A2($Signal.forwardTo,address,function (_p1) {    return $PechaKucha$Actions.Pause;}),
+           $PechaKucha$Config.clockConfig,
+           angle);}
    });
-   return _elm.PechaKucha.Overlay.values = {_op: _op,clockLineStyle: clockLineStyle,opacityStep: opacityStep,view: view,clock: clock};
+   return _elm.PechaKucha.Overlay.values = {_op: _op,view: view};
 };
 Elm.PechaKucha = Elm.PechaKucha || {};
 Elm.PechaKucha.Footer = Elm.PechaKucha.Footer || {};
